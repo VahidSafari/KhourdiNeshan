@@ -18,4 +18,11 @@ public class DefaultLocationRepository implements LocationRepository {
     public LiveData<Location> getLiveLocation() {
         return locationDataSource.getLiveLocation();
     }
+
+    @Override
+    public void startReceivingLocation() {
+        locationDataSource.startReceivingLocation();
+    }
+
+
 }

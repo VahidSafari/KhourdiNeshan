@@ -6,4 +6,5 @@ import androidx.lifecycle.LiveData;
 
 public interface LocationRepository {
     LiveData<Location> getLiveLocation();
+    void startReceivingLocation();
 }

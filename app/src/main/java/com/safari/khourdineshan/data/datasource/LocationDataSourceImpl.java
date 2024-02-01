@@ -1,10 +1,15 @@
 package com.safari.khourdineshan.data.datasource;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresPermission;
+import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
@@ -22,7 +27,6 @@ public class LocationDataSourceImpl implements LocationDataSource {
     public LocationDataSourceImpl(FusedLocationProviderClient fusedLocationClient, LocationRequest locationRequest) {
         this.fusedLocationClient = fusedLocationClient;
         this.locationRequest = locationRequest;
-        fetchCurrentLocation();
     }
 
     @Override
@@ -31,8 +35,8 @@ public class LocationDataSourceImpl implements LocationDataSource {
     }
 
 
-    @SuppressLint("MissingPermission")
-    private void fetchCurrentLocation() {
+    @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+    public void startReceivingLocation() {
         fusedLocationClient.requestLocationUpdates(
                 locationRequest,
                 new LocationCallback() {

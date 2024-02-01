@@ -6,10 +6,10 @@ import android.content.Context;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.safari.khourdineshan.data.datasource.LocationDataSource;
 import com.safari.khourdineshan.data.datasource.LocationDataSourceImpl;
 import com.safari.khourdineshan.data.repository.DefaultLocationRepository;
 import com.safari.khourdineshan.data.repository.LocationRepository;
+import com.safari.khourdineshan.viewmodel.MainActivityViewModelFactory;
 
 public class ApplicationProvider {
 
@@ -44,9 +44,13 @@ public class ApplicationProvider {
         }
     }
 
-    public LocationRepository getLocationRepositorySingleInstance(LocationDataSource locationDataSource) {
+    public MainActivityViewModelFactory getMainActivityViewModelFactory() {
+        return new MainActivityViewModelFactory();
+    }
+
+    public LocationRepository getLocationRepositorySingleInstance() {
         if (defaultLocationRepository == null) {
-            defaultLocationRepository = new DefaultLocationRepository(locationDataSource);
+            defaultLocationRepository = new DefaultLocationRepository(getLocationDataSource(getFusedLocationProvider(getApplicationContext()), getLocationRequest()));
         }
         return defaultLocationRepository;
     }
