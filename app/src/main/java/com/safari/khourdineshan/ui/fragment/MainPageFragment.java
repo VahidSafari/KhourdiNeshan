@@ -1,4 +1,4 @@
-package com.safari.khourdineshan.ui;
+package com.safari.khourdineshan.ui.fragment;
 
 import android.os.Bundle;
 

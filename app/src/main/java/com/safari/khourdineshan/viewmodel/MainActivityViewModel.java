@@ -21,7 +21,6 @@ public class MainActivityViewModel extends ViewModel {
     }
 
     public void startReceivingLocation() {
-        Log.d("location", "startReceivingLocation: ");
         locationRepository.startReceivingLocation();
     }
 
