@@ -1,10 +1,10 @@
-package com.safari.khourdineshan.data.repository;
+package com.safari.khourdineshan.data.location.repository;
 
 import android.location.Location;
 
 import androidx.lifecycle.LiveData;
 
-import com.safari.khourdineshan.data.datasource.LocationDataSource;
+import com.safari.khourdineshan.data.location.datasource.LocationDataSource;
 
 public class DefaultLocationRepository implements LocationRepository {
 

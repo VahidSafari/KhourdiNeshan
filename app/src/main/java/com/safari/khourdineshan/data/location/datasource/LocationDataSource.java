@@ -1,4 +1,4 @@
-package com.safari.khourdineshan.data.datasource;
+package com.safari.khourdineshan.data.location.datasource;
 
 import android.location.Location;
 

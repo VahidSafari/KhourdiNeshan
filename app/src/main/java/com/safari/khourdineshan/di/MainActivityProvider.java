@@ -3,6 +3,7 @@ package com.safari.khourdineshan.di;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 
+import androidx.annotation.NonNull;
 
 import com.carto.styles.AnimationStyle;
 import com.carto.styles.AnimationStyleBuilder;
@@ -10,10 +11,17 @@ import com.carto.styles.AnimationType;
 import com.carto.styles.MarkerStyle;
 import com.carto.styles.MarkerStyleBuilder;
 import com.carto.utils.BitmapUtils;
+import com.google.gson.Gson;
 import com.safari.khourdineshan.R;
+import com.safari.khourdineshan.data.routing.datasource.RoutingService;
 
-import org.neshan.common.model.LatLng;
 import org.neshan.mapsdk.model.Marker;
+
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.OkHttpClient;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivityProvider {
     private static MainActivityProvider INSTANCE;
@@ -85,6 +93,40 @@ public class MainActivityProvider {
             droppedPinMarker = new Marker(null, getCurrentLocationMarkerStyle(context));
         }
         return droppedPinMarker;
+    }
+
+    private static final int RETRY_INTERVAL = 10;
+    private static final int MAX_RETRIES = 3;
+    private static final boolean IS_RETRY_INCREMENTAL = true;
+
+    private static RoutingService routingService;
+    private static Gson gson;
+
+    @NonNull
+    private static OkHttpClient getOkhttpClient() {
+        return new OkHttpClient.Builder()
+                .readTimeout(10L, TimeUnit.SECONDS)
+                .connectTimeout(10L, TimeUnit.SECONDS)
+                .callTimeout(10L, TimeUnit.SECONDS)
+                .writeTimeout(10L, TimeUnit.SECONDS)
+                .build();
+    }
+
+    @NonNull
+    private static Retrofit getRetrofit() {
+        return new Retrofit.Builder()
+                .client(getOkhttpClient())
+                .baseUrl("https://api.neshan.org")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+    }
+
+    @NonNull
+    public static RoutingService getAlertService() {
+        if (routingService == null) {
+            routingService = getRetrofit().create(RoutingService.class);
+        }
+        return routingService;
     }
 
     public static void deinit() {

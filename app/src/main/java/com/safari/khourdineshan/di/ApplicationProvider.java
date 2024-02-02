@@ -6,9 +6,9 @@ import android.content.Context;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.safari.khourdineshan.data.datasource.LocationDataSourceImpl;
-import com.safari.khourdineshan.data.repository.DefaultLocationRepository;
-import com.safari.khourdineshan.data.repository.LocationRepository;
+import com.safari.khourdineshan.data.location.datasource.LocationDataSourceImpl;
+import com.safari.khourdineshan.data.location.repository.DefaultLocationRepository;
+import com.safari.khourdineshan.data.location.repository.LocationRepository;
 import com.safari.khourdineshan.viewmodel.MainActivityViewModelFactory;
 
 public class ApplicationProvider {

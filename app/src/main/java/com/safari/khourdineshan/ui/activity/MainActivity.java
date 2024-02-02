@@ -47,9 +47,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initClickListeners() {
-        binding.map.setOnMapLongClickListener(latLng -> {
-
-        });
+        binding.map.setOnMapLongClickListener(latLng -> mainActivityViewModel.onMapLongClicked(latLng));
+        binding.map.setOnMapClickListener(latLng -> mainActivityViewModel.onMapClicked(latLng));
     }
 
     private void checkLocationPermission() {

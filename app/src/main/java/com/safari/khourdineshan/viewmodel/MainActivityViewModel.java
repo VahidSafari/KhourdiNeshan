@@ -6,7 +6,9 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.safari.khourdineshan.data.repository.LocationRepository;
+import com.safari.khourdineshan.data.location.repository.LocationRepository;
+
+import org.neshan.common.model.LatLng;
 
 public class MainActivityViewModel extends ViewModel {
 
@@ -29,5 +31,26 @@ public class MainActivityViewModel extends ViewModel {
         return mapUiState;
     }
 
+    public void onMapLongClicked(LatLng latLng) {
+        if (mapUiState.getValue() == MapUIState.DO_NOT_FOLLOW_USER_LOCATION || mapUiState.getValue() == MapUIState.FOLLOW_USER_LOCATION) {
+            showDroppedPinMarker(latLng);
+            requestForRoute();
+            mapUiState.setValue(MapUIState.WAITING_FOR_ROUTE_RESPONSE);
+        } else {
+            // long click is considered disabled in other modes
+        }
+    }
+
+    private void requestForRoute() {
+
+    }
+
+    private void showDroppedPinMarker(LatLng latLng) {
+
+    }
+
+    public void onMapClicked(LatLng latLng) {
+
+    }
 }
 
