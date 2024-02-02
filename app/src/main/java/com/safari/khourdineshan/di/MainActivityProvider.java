@@ -1,6 +1,7 @@
 package com.safari.khourdineshan.di;
 
 import android.content.Context;
+import android.graphics.BitmapFactory;
 
 
 import com.carto.styles.AnimationStyle;
@@ -8,16 +9,19 @@ import com.carto.styles.AnimationStyleBuilder;
 import com.carto.styles.AnimationType;
 import com.carto.styles.MarkerStyle;
 import com.carto.styles.MarkerStyleBuilder;
+import com.carto.utils.BitmapUtils;
+import com.safari.khourdineshan.R;
 
+import org.neshan.common.model.LatLng;
 import org.neshan.mapsdk.model.Marker;
 
 public class MainActivityProvider {
     private static MainActivityProvider INSTANCE;
-    private Context mainActivityContext;
     private AnimationStyle markerAnimationStyle;
     private MarkerStyle currentLocationMarkerStyle;
     private MarkerStyle droppedPinMarkerStyle;
     private Marker currentLocationMarker;
+    private Marker droppedPinMarker;
 
     public static void init() {
         if (INSTANCE == null) {
@@ -47,22 +51,41 @@ public class MainActivityProvider {
         return markerAnimationStyle;
     }
 
-    public MarkerStyle getCurrentLocationMarkerStyle() {
+    public MarkerStyle getCurrentLocationMarkerStyle(Context context) {
         if (currentLocationMarkerStyle == null) {
             MarkerStyleBuilder markerStyleBuilder = new MarkerStyleBuilder();
+            markerStyleBuilder.setSize(25f);
+            markerStyleBuilder.setBitmap(BitmapUtils.createBitmapFromAndroidBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.blue_circle)));
+            markerStyleBuilder.setAnimationStyle(getMarkerAnimationStyle());
+            currentLocationMarkerStyle = markerStyleBuilder.buildStyle();
         }
         return currentLocationMarkerStyle;
     }
 
-    public MarkerStyle getDroppedPinMarkerStyle() {
+    public MarkerStyle getDroppedPinMarkerStyle(Context context) {
         if (droppedPinMarkerStyle == null) {
             MarkerStyleBuilder markerStyleBuilder = new MarkerStyleBuilder();
-
+            markerStyleBuilder.setSize(30f);
+            markerStyleBuilder.setBitmap(BitmapUtils.createBitmapFromAndroidBitmap(BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_marker)));
+            markerStyleBuilder.setAnimationStyle(getMarkerAnimationStyle());
+            droppedPinMarkerStyle = markerStyleBuilder.buildStyle();
         }
         return droppedPinMarkerStyle;
     }
 
+    public Marker getCurrentLocationMarker(Context context) {
+        if (currentLocationMarker == null) {
+            currentLocationMarker = new Marker(null, getCurrentLocationMarkerStyle(context));
+        }
+        return currentLocationMarker;
+    }
 
+    public Marker getDroppedPinMarker(Context context) {
+        if (droppedPinMarker == null) {
+            droppedPinMarker = new Marker(null, getCurrentLocationMarkerStyle(context));
+        }
+        return droppedPinMarker;
+    }
 
     public static void deinit() {
         INSTANCE = null;

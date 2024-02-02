@@ -6,12 +6,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -19,22 +16,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.carto.styles.AnimationStyleBuilder;
-import com.carto.styles.AnimationType;
-import com.carto.styles.MarkerStyle;
-import com.carto.styles.MarkerStyleBuilder;
-import com.carto.utils.BitmapUtils;
 import com.safari.khourdineshan.KhoordiNeshanService;
 import com.safari.khourdineshan.LocalBinder;
-import com.safari.khourdineshan.R;
 import com.safari.khourdineshan.databinding.ActivityMainBinding;
 import com.safari.khourdineshan.di.ApplicationProvider;
 import com.safari.khourdineshan.di.MainActivityProvider;
+import com.safari.khourdineshan.utils.MapUtils;
 import com.safari.khourdineshan.utils.PermissionUtils;
 import com.safari.khourdineshan.viewmodel.MainActivityViewModel;
-
-import org.neshan.common.model.LatLng;
-import org.neshan.mapsdk.model.Marker;
+import com.safari.khourdineshan.viewmodel.MapUIState;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -43,8 +33,6 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     KhoordiNeshanService khoordiNeshanService;
     private MainActivityViewModel mainActivityViewModel;
-    private Marker currentLocationMarker;
-    private Marker droppedPinMarker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,46 +76,27 @@ public class MainActivity extends AppCompatActivity {
     private void initMainActivityViewModel() {
         mainActivityViewModel = new ViewModelProvider(this, ApplicationProvider.getInstance().getMainActivityViewModelFactory()).get(MainActivityViewModel.class);
         mainActivityViewModel.getLiveLocation().observe(this, this::onNewLocationReceived);
+        mainActivityViewModel.getMapUIState().observe(this, this::onMapUiStateChanged);
+    }
+
+    private void onMapUiStateChanged(MapUIState mapUIState) {
+        switch (mapUIState) {
+            case FOLLOW_USER_LOCATION:
+                break;
+            case DO_NOT_FOLLOW_USER_LOCATION:
+                break;
+            case SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN:
+                break;
+            case NAVIGATION:
+                break;
+        }
     }
 
     private void onNewLocationReceived(Location location) {
-        addUserMarker(new LatLng(location.getLatitude(), location.getLongitude()));
-        focusOnUserLocation(location);
-    }
-
-
-    private Marker addMarker(LatLng loc) {
-        // Creating animation for marker. We should use an object of type AnimationStyleBuilder, set
-        // all animation features on it and then call buildStyle() method that returns an object of type
-        // AnimationStyle
-        AnimationStyleBuilder animStBl = new AnimationStyleBuilder();
-        animStBl.setFadeAnimationType(AnimationType.ANIMATION_TYPE_SMOOTHSTEP);
-        animStBl.setSizeAnimationType(AnimationType.ANIMATION_TYPE_SPRING);
-        animStBl.setPhaseInDuration(0.5f);
-        animStBl.setPhaseOutDuration(0.5f);
-        animSt = animStBl.buildStyle();
-
-        // Creating marker style. We should use an object of type MarkerStyleBuilder, set all features on it
-        // and then call buildStyle method on it. This method returns an object of type MarkerStyle
-        MarkerStyleBuilder markStCr = new MarkerStyleBuilder();
-        markStCr.setSize(30f);
-        markStCr.setBitmap(BitmapUtils.createBitmapFromAndroidBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_marker)));
-        // AnimationStyle object - that was created before - is used here
-        markStCr.setAnimationStyle(animSt);
-        MarkerStyle markSt = markStCr.buildStyle();
-
-        // Creating marker
-        currentLocationMarker = new Marker(loc, markSt);
-
-        // Adding marker to markerLayer, or showing marker on map!
-        map.addMarker(marker);
-        return marker;
-    }
-
-    public void focusOnUserLocation(Location location) {
-            binding.map.moveCamera(
-                    new LatLng(location.getLatitude(), location.getLongitude()), 0.25f);
-            binding.map.setZoom(15, 0.25f);
+        MapUtils.updateMarkerLocation(binding.map, MainActivityProvider.getInstance().getCurrentLocationMarker(this), location);
+        if (mainActivityViewModel.getMapUIState().getValue() == MapUIState.FOLLOW_USER_LOCATION) {
+            MapUtils.focusOnLocation(binding.map, location);
+        }
     }
 
     @Override

@@ -9,7 +9,7 @@ public class LocalBinder extends Binder {
         this.khoordiNeshanService = khoordiNeshanService;
     }
 
-    KhoordiNeshanService getService() {
+    public KhoordiNeshanService getService() {
         return khoordiNeshanService;
     }
 }
