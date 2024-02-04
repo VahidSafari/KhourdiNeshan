@@ -11,8 +11,8 @@ import com.carto.styles.AnimationType;
 import com.carto.styles.MarkerStyle;
 import com.carto.styles.MarkerStyleBuilder;
 import com.carto.utils.BitmapUtils;
-import com.google.gson.Gson;
 import com.safari.khourdineshan.R;
+import com.safari.khourdineshan.core.BaseUrls;
 import com.safari.khourdineshan.data.routing.datasource.RoutingService;
 
 import org.neshan.mapsdk.model.Marker;
@@ -30,6 +30,10 @@ public class MainActivityProvider {
     private MarkerStyle droppedPinMarkerStyle;
     private Marker currentLocationMarker;
     private Marker droppedPinMarker;
+    private static final int REQUEST_TIME_OUT_IN_SECONDS = 10;
+
+    private static RoutingService routingService;
+
 
     public static void init() {
         if (INSTANCE == null) {
@@ -95,20 +99,13 @@ public class MainActivityProvider {
         return droppedPinMarker;
     }
 
-    private static final int RETRY_INTERVAL = 10;
-    private static final int MAX_RETRIES = 3;
-    private static final boolean IS_RETRY_INCREMENTAL = true;
-
-    private static RoutingService routingService;
-    private static Gson gson;
-
     @NonNull
     private static OkHttpClient getOkhttpClient() {
         return new OkHttpClient.Builder()
-                .readTimeout(10L, TimeUnit.SECONDS)
-                .connectTimeout(10L, TimeUnit.SECONDS)
-                .callTimeout(10L, TimeUnit.SECONDS)
-                .writeTimeout(10L, TimeUnit.SECONDS)
+                .readTimeout(REQUEST_TIME_OUT_IN_SECONDS, TimeUnit.SECONDS)
+                .connectTimeout(REQUEST_TIME_OUT_IN_SECONDS, TimeUnit.SECONDS)
+                .callTimeout(REQUEST_TIME_OUT_IN_SECONDS, TimeUnit.SECONDS)
+                .writeTimeout(REQUEST_TIME_OUT_IN_SECONDS, TimeUnit.SECONDS)
                 .build();
     }
 
@@ -116,13 +113,13 @@ public class MainActivityProvider {
     private static Retrofit getRetrofit() {
         return new Retrofit.Builder()
                 .client(getOkhttpClient())
-                .baseUrl("https://api.neshan.org")
+                .baseUrl(BaseUrls.ROUTING_BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
     }
 
     @NonNull
-    public static RoutingService getAlertService() {
+    public static RoutingService getRoutingService() {
         if (routingService == null) {
             routingService = getRetrofit().create(RoutingService.class);
         }
