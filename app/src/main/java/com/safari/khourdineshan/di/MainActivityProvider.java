@@ -39,7 +39,7 @@ public class MainActivityProvider {
         if (INSTANCE == null) {
             INSTANCE = new MainActivityProvider();
         } else {
-            throw new RuntimeException("application provider instantiated!");
+            throw new RuntimeException("main activity provider instantiated!");
         }
     }
 
