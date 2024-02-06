@@ -2,7 +2,7 @@ package com.safari.khourdineshan.utils;
 
 import android.location.Location;
 
-import com.safari.khourdineshan.ui.mapper.LocationMapper;
+import com.safari.khourdineshan.core.mapper.LocationMapper;
 
 import org.neshan.mapsdk.MapView;
 import org.neshan.mapsdk.model.Marker;

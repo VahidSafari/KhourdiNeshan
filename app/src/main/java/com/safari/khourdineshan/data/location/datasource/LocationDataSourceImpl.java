@@ -25,6 +25,7 @@ public class LocationDataSourceImpl implements LocationDataSource {
         this.locationRequest = locationRequest;
     }
 
+    @NonNull
     @Override
     public LiveData<Location> getLiveLocation() {
         return locationMutableLiveData;

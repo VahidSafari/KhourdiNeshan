@@ -11,7 +11,7 @@ public class MainActivityViewModelFactory implements ViewModelProvider.Factory {
     @NonNull
     @Override
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
-        return (T) new MainActivityViewModel(ApplicationProvider.getInstance().getLocationRepositorySingleInstance());
+        return (T) new MainActivityViewModel(ApplicationProvider.getInstance().getLocationRepositorySingleInstance(), routingRepository);
     }
 
 }

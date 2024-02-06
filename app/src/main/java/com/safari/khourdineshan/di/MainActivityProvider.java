@@ -13,7 +13,11 @@ import com.carto.styles.MarkerStyleBuilder;
 import com.carto.utils.BitmapUtils;
 import com.safari.khourdineshan.R;
 import com.safari.khourdineshan.core.BaseUrls;
+import com.safari.khourdineshan.data.routing.datasource.RoutingRemoteDataSource;
+import com.safari.khourdineshan.data.routing.datasource.RoutingRemoteDataSourceImpl;
 import com.safari.khourdineshan.data.routing.datasource.RoutingService;
+import com.safari.khourdineshan.data.routing.repository.DefaultRoutingRepository;
+import com.safari.khourdineshan.data.routing.repository.RoutingRepository;
 
 import org.neshan.mapsdk.model.Marker;
 
@@ -31,9 +35,6 @@ public class MainActivityProvider {
     private Marker currentLocationMarker;
     private Marker droppedPinMarker;
     private static final int REQUEST_TIME_OUT_IN_SECONDS = 10;
-
-    private static RoutingService routingService;
-
 
     public static void init() {
         if (INSTANCE == null) {
@@ -119,11 +120,18 @@ public class MainActivityProvider {
     }
 
     @NonNull
-    public static RoutingService getRoutingService() {
-        if (routingService == null) {
-            routingService = getRetrofit().create(RoutingService.class);
-        }
-        return routingService;
+    public RoutingService getRoutingService() {
+        return getRetrofit().create(RoutingService.class);
+    }
+
+    @NonNull
+    public RoutingRemoteDataSource getRoutingRemoteDataSource(RoutingService routingService) {
+        return new RoutingRemoteDataSourceImpl(routingService);
+    }
+
+    @NonNull
+    public RoutingRepository getRoutingRepository(RoutingRemoteDataSource routingRemoteDataSource) {
+        return new DefaultRoutingRepository(routingRemoteDataSource);
     }
 
     public static void deinit() {
