@@ -35,6 +35,7 @@ public class MainActivityProvider {
     private Marker currentLocationMarker;
     private Marker droppedPinMarker;
     private static final int REQUEST_TIME_OUT_IN_SECONDS = 10;
+    private RoutingRepository routingRepository;
 
     public static void init() {
         if (INSTANCE == null) {
@@ -130,8 +131,11 @@ public class MainActivityProvider {
     }
 
     @NonNull
-    public RoutingRepository getRoutingRepository(RoutingRemoteDataSource routingRemoteDataSource) {
-        return new DefaultRoutingRepository(routingRemoteDataSource);
+    public RoutingRepository getRoutingRepository() {
+        if (routingRepository == null) {
+            routingRepository = new DefaultRoutingRepository(getRoutingRemoteDataSource(getRoutingService()));
+        }
+        return routingRepository;
     }
 
     public static void deinit() {
