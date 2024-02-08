@@ -15,12 +15,25 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.safari.khourdineshan.KhoordiNeshanService;
 import com.safari.khourdineshan.databinding.ActivityMainBinding;
-import com.safari.khourdineshan.di.ApplicationProvider;
 import com.safari.khourdineshan.di.MainActivityProvider;
 import com.safari.khourdineshan.utils.MapUtils;
 import com.safari.khourdineshan.utils.PermissionUtils;
 import com.safari.khourdineshan.viewmodel.MainActivityViewModel;
-import com.safari.khourdineshan.viewmodel.MapUIState;
+import com.safari.khourdineshan.viewmodel.model.DO_NOT_FOLLOW_USER_LOCATION;
+import com.safari.khourdineshan.viewmodel.model.FOLLOW_USER_LOCATION;
+import com.safari.khourdineshan.viewmodel.model.MapUIState;
+import com.safari.khourdineshan.viewmodel.model.NAVIGATION;
+import com.safari.khourdineshan.viewmodel.model.SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN;
+import com.safari.khourdineshan.viewmodel.model.WAITING_FOR_ROUTE_RESPONSE;
+
+import org.neshan.common.model.LatLng;
+import org.neshan.common.utils.PolylineEncoding;
+import org.neshan.mapsdk.model.Marker;
+import org.neshan.mapsdk.model.Polyline;
+import org.neshan.servicessdk.direction.model.DirectionStep;
+import org.neshan.servicessdk.direction.model.Route;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -33,8 +46,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        initMainActivityViewModel();
         MainActivityProvider.init();
+        initMainActivityViewModel();
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         checkLocationPermission();
@@ -45,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
     private void initClickListeners() {
         binding.map.setOnMapLongClickListener(latLng -> mainActivityViewModel.onMapLongClicked(latLng));
         binding.map.setOnMapClickListener(latLng -> mainActivityViewModel.onMapClicked(latLng));
+        binding.getRouteFab.setOnClickListener(v -> mainActivityViewModel.requestForRoute());
     }
 
     private void checkLocationPermission() {
@@ -69,30 +83,30 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initMainActivityViewModel() {
-        mainActivityViewModel = new ViewModelProvider(this, ApplicationProvider.getInstance().getMainActivityViewModelFactory()).get(MainActivityViewModel.class);
+        mainActivityViewModel = new ViewModelProvider(this, MainActivityProvider.getInstance().getMainActivityViewModelFactory()).get(MainActivityViewModel.class);
         mainActivityViewModel.getLiveLocation().observe(this, this::onNewLocationReceived);
         mainActivityViewModel.getMapUIState().observe(this, this::onMapUiStateChanged);
+        mainActivityViewModel.getDroppedPinLatLng().observe(this, this::onDroppedPinLatLngChanged);
+    }
+
+    private void onDroppedPinLatLngChanged(LatLng latLng) {
+        Marker droppedPinMarker = MainActivityProvider.getInstance().getDroppedPinMarker(this);
+        binding.map.removeMarker(droppedPinMarker);
+        droppedPinMarker.setLatLng(latLng);
+        binding.map.addMarker(droppedPinMarker);
     }
 
     private void onMapUiStateChanged(MapUIState mapUIState) {
-        switch (mapUIState) {
-            case FOLLOW_USER_LOCATION:
-                showMapFollowState();
-                break;
-            case DO_NOT_FOLLOW_USER_LOCATION:
-                showMapUnfollowState();
-                break;
-            case SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN:
-                showRoutingState();
-                break;
-            case NAVIGATION:
-                showNavigationState();
-                break;
-            case WAITING_FOR_ROUTE_RESPONSE:
-                showLoadingState();
-                break;
-            default:
-                break;
+        if (mapUIState instanceof FOLLOW_USER_LOCATION) {
+            showMapFollowState();
+        } else if (mapUIState instanceof DO_NOT_FOLLOW_USER_LOCATION) {
+            showMapUnfollowState();
+        } else if (mapUIState instanceof SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN) {
+            showRoutingState((SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN) mapUIState);
+        } else if (mapUIState instanceof NAVIGATION) {
+            showNavigationState();
+        } else if (mapUIState instanceof WAITING_FOR_ROUTE_RESPONSE) {
+            showLoadingState();
         }
     }
 
@@ -100,8 +114,9 @@ public class MainActivity extends AppCompatActivity {
         hideLoadingState();
     }
 
-    private void showRoutingState() {
+    private void showRoutingState(SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN state) {
         hideLoadingState();
+        showRouteOnMap(state.getRoute());
     }
 
     private void showMapUnfollowState() {
@@ -127,9 +142,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void showRouteOnMap(Route route) {
+        routeOverviewPolylinePoints = new ArrayList<>(PolylineEncoding.decode(route.getOverviewPolyline().getEncodedPolyline()));
+        decodedStepByStepPath = new ArrayList<>();
+
+        // decoding each segment of steps and putting to an array
+        for (DirectionStep step : route.getLegs().get(0).getDirectionSteps()) {
+            decodedStepByStepPath.addAll(PolylineEncoding.decode(step.getEncodedPolyline()));
+        }
+
+        onMapPolyline = new Polyline(routeOverviewPolylinePoints, getLineStyle());
+        //draw polyline between route points
+        map.addPolyline(onMapPolyline);
+        // focusing camera on first point of drawn line
+        mapSetPosition(overview);
+    }
+
     private void onNewLocationReceived(Location location) {
         MapUtils.updateMarkerLocation(binding.map, MainActivityProvider.getInstance().getCurrentLocationMarker(this), location);
-        if (mainActivityViewModel.getMapUIState().getValue() == MapUIState.FOLLOW_USER_LOCATION) {
+        if (mainActivityViewModel.getMapUIState().getValue() instanceof FOLLOW_USER_LOCATION) {
             MapUtils.focusOnLocation(binding.map, location);
         }
     }

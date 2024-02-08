@@ -3,29 +3,19 @@ package com.safari.khourdineshan.di;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 
-import androidx.annotation.NonNull;
-
+import com.carto.graphics.Color;
 import com.carto.styles.AnimationStyle;
 import com.carto.styles.AnimationStyleBuilder;
 import com.carto.styles.AnimationType;
+import com.carto.styles.LineStyle;
+import com.carto.styles.LineStyleBuilder;
 import com.carto.styles.MarkerStyle;
 import com.carto.styles.MarkerStyleBuilder;
 import com.carto.utils.BitmapUtils;
 import com.safari.khourdineshan.R;
-import com.safari.khourdineshan.core.BaseUrls;
-import com.safari.khourdineshan.data.routing.datasource.RoutingRemoteDataSource;
-import com.safari.khourdineshan.data.routing.datasource.RoutingRemoteDataSourceImpl;
-import com.safari.khourdineshan.data.routing.datasource.RoutingService;
-import com.safari.khourdineshan.data.routing.repository.DefaultRoutingRepository;
-import com.safari.khourdineshan.data.routing.repository.RoutingRepository;
+import com.safari.khourdineshan.viewmodel.MainActivityViewModelFactory;
 
 import org.neshan.mapsdk.model.Marker;
-
-import java.util.concurrent.TimeUnit;
-
-import okhttp3.OkHttpClient;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivityProvider {
     private static MainActivityProvider INSTANCE;
@@ -34,8 +24,6 @@ public class MainActivityProvider {
     private MarkerStyle droppedPinMarkerStyle;
     private Marker currentLocationMarker;
     private Marker droppedPinMarker;
-    private static final int REQUEST_TIME_OUT_IN_SECONDS = 10;
-    private RoutingRepository routingRepository;
 
     public static void init() {
         if (INSTANCE == null) {
@@ -51,6 +39,10 @@ public class MainActivityProvider {
         } else {
             return INSTANCE;
         }
+    }
+
+    public MainActivityViewModelFactory getMainActivityViewModelFactory() {
+        return new MainActivityViewModelFactory();
     }
 
     public AnimationStyle getMarkerAnimationStyle() {
@@ -96,46 +88,17 @@ public class MainActivityProvider {
 
     public Marker getDroppedPinMarker(Context context) {
         if (droppedPinMarker == null) {
-            droppedPinMarker = new Marker(null, getCurrentLocationMarkerStyle(context));
+            droppedPinMarker = new Marker(null, getDroppedPinMarkerStyle(context));
         }
         return droppedPinMarker;
     }
 
-    @NonNull
-    private static OkHttpClient getOkhttpClient() {
-        return new OkHttpClient.Builder()
-                .readTimeout(REQUEST_TIME_OUT_IN_SECONDS, TimeUnit.SECONDS)
-                .connectTimeout(REQUEST_TIME_OUT_IN_SECONDS, TimeUnit.SECONDS)
-                .callTimeout(REQUEST_TIME_OUT_IN_SECONDS, TimeUnit.SECONDS)
-                .writeTimeout(REQUEST_TIME_OUT_IN_SECONDS, TimeUnit.SECONDS)
-                .build();
-    }
-
-    @NonNull
-    private static Retrofit getRetrofit() {
-        return new Retrofit.Builder()
-                .client(getOkhttpClient())
-                .baseUrl(BaseUrls.ROUTING_BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-    }
-
-    @NonNull
-    public RoutingService getRoutingService() {
-        return getRetrofit().create(RoutingService.class);
-    }
-
-    @NonNull
-    public RoutingRemoteDataSource getRoutingRemoteDataSource(RoutingService routingService) {
-        return new RoutingRemoteDataSourceImpl(routingService);
-    }
-
-    @NonNull
-    public RoutingRepository getRoutingRepository() {
-        if (routingRepository == null) {
-            routingRepository = new DefaultRoutingRepository(getRoutingRemoteDataSource(getRoutingService()));
-        }
-        return routingRepository;
+    public LineStyle getLineStyle() {
+        LineStyleBuilder lineStCr = new LineStyleBuilder();
+        lineStCr.setColor(new Color((short) 2, (short) 119, (short) 189, (short) 190));
+        lineStCr.setWidth(10f);
+        lineStCr.setStretchFactor(0f);
+        return lineStCr.buildStyle();
     }
 
     public static void deinit() {

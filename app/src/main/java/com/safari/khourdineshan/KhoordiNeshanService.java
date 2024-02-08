@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import com.safari.khourdineshan.ui.activity.MainActivity;
+import com.safari.khourdineshan.viewmodel.KhourdiNeshanServiceViewModel;
 
 public class KhoordiNeshanService extends Service {
 
@@ -22,6 +23,8 @@ public class KhoordiNeshanService extends Service {
     private static final int NOTIFICATION_ID = 54832;
     private static final String CHANNEL_ID = "KhoordiNeshanService54832";
     private static final String CHANNEL_NAME = "Khoordi";
+
+    private KhourdiNeshanServiceViewModel khourdiNeshanServiceViewModel;
 
     @Override
     public void onCreate() {
