@@ -8,6 +8,6 @@ public class KhourdiNeshanServiceViewModelFactory implements ViewModelProvider.F
     @NonNull
     @Override
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
-        return new KhourdiNeshanServiceViewModel();
+        return (T) new KhourdiNeshanServiceViewModel();
     }
 }

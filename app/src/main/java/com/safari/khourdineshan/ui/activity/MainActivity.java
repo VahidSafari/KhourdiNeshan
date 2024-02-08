@@ -42,6 +42,9 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     private MainActivityViewModel mainActivityViewModel;
     private AlertDialog loadingDialog;
+    private ArrayList<LatLng> routeOverviewPolylinePoints;
+    private ArrayList<LatLng> decodedStepByStepPath;
+    private Polyline onMapPolyline;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -151,11 +154,14 @@ public class MainActivity extends AppCompatActivity {
             decodedStepByStepPath.addAll(PolylineEncoding.decode(step.getEncodedPolyline()));
         }
 
-        onMapPolyline = new Polyline(routeOverviewPolylinePoints, getLineStyle());
+        if (onMapPolyline != null) {
+            binding.map.removePolyline(onMapPolyline);
+        }
+        onMapPolyline = new Polyline(routeOverviewPolylinePoints, MainActivityProvider.getInstance().getLineStyle());
         //draw polyline between route points
-        map.addPolyline(onMapPolyline);
+        binding.map.addPolyline(onMapPolyline);
         // focusing camera on first point of drawn line
-        mapSetPosition(overview);
+        MapUtils.focusOnRectangleOfTwoPoints(binding.map, MainActivityProvider.getInstance().getCurrentLocationMarker(this).getLatLng(), MainActivityProvider.getInstance().getDroppedPinMarker(this).getLatLng());
     }
 
     private void onNewLocationReceived(Location location) {

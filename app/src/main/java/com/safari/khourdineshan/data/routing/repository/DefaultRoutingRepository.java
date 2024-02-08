@@ -11,6 +11,8 @@ import com.safari.khourdineshan.data.routing.datasource.RoutingService;
 import org.neshan.common.model.LatLng;
 import org.neshan.servicessdk.direction.model.Route;
 
+import java.io.IOException;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -43,7 +45,11 @@ public class DefaultRoutingRepository implements RoutingRepository {
                 if (response.body() != null && response.body().body() != null) {
                     carRouteResult.setValue(response.body().body());
                 } else {
-                    carRouteResult.setValue(new Result.Fail(new Throwable("invalid response")));
+                    try {
+                        carRouteResult.setValue(new Result.Fail(new Throwable(response.errorBody() != null ? response.errorBody().string() : "request failed. try again")));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
 
