@@ -17,7 +17,7 @@ public class MainActivityViewModel extends ViewModel {
     private final LocationRepository locationRepository;
     private final RoutingRepository routingRepository;
     private final MutableLiveData<MapUIState> mapUiState = new MutableLiveData<>(MapUIState.FOLLOW_USER_LOCATION);
-    private MutableLiveData<LatLng> droppedPinLatLng = new MutableLiveData<>();
+    private final MutableLiveData<LatLng> droppedPinLatLng = new MutableLiveData<>();
 
 
     public MainActivityViewModel(LocationRepository locationRepository, RoutingRepository routingRepository) {

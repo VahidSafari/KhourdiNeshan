@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import com.safari.khourdineshan.ui.activity.MainActivity;
@@ -18,7 +19,6 @@ public class KhoordiNeshanService extends Service {
     public static final String SERVICE_CONTENT_TITLE = "نشان خوردی";
     public static final String SERVICE_CONTENT_TEXT = "در حال دریافت لوکیشن";
 
-    // Binder given to clients.
     private static final int NOTIFICATION_ID = 54832;
     private static final String CHANNEL_ID = "KhoordiNeshanService54832";
     private static final String CHANNEL_NAME = "Khoordi";
@@ -52,23 +52,25 @@ public class KhoordiNeshanService extends Service {
 
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pendingIntent = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        }
 
         builder.setContentIntent(pendingIntent);
         return builder.build();
-    }
-
-    private final IBinder binder = new LocalBinder(this);
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return binder;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         stopForeground(true);
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 
 }

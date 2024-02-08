@@ -1,23 +1,19 @@
 package com.safari.khourdineshan.ui.activity;
 
 import android.Manifest;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.safari.khourdineshan.KhoordiNeshanService;
-import com.safari.khourdineshan.LocalBinder;
 import com.safari.khourdineshan.databinding.ActivityMainBinding;
 import com.safari.khourdineshan.di.ApplicationProvider;
 import com.safari.khourdineshan.di.MainActivityProvider;
@@ -31,8 +27,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 2121;
 
     private ActivityMainBinding binding;
-    KhoordiNeshanService khoordiNeshanService;
     private MainActivityViewModel mainActivityViewModel;
+    private AlertDialog loadingDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,13 +77,53 @@ public class MainActivity extends AppCompatActivity {
     private void onMapUiStateChanged(MapUIState mapUIState) {
         switch (mapUIState) {
             case FOLLOW_USER_LOCATION:
+                showMapFollowState();
                 break;
             case DO_NOT_FOLLOW_USER_LOCATION:
+                showMapUnfollowState();
                 break;
             case SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN:
+                showRoutingState();
                 break;
             case NAVIGATION:
+                showNavigationState();
                 break;
+            case WAITING_FOR_ROUTE_RESPONSE:
+                showLoadingState();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void showNavigationState() {
+        hideLoadingState();
+    }
+
+    private void showRoutingState() {
+        hideLoadingState();
+    }
+
+    private void showMapUnfollowState() {
+        hideLoadingState();
+    }
+
+    private void showMapFollowState() {
+        hideLoadingState();
+    }
+
+    private void showLoadingState() {
+        hideLoadingState();
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("getting route, please wait...")
+                .setCancelable(false);
+        loadingDialog = builder.create();
+        loadingDialog.show();
+    }
+
+    private void hideLoadingState() {
+        if (loadingDialog != null) {
+            loadingDialog.hide();
         }
     }
 
@@ -97,32 +133,6 @@ public class MainActivity extends AppCompatActivity {
             MapUtils.focusOnLocation(binding.map, location);
         }
     }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Intent intent = new Intent(this, KhoordiNeshanService.class);
-        bindService(intent, connection, Context.BIND_AUTO_CREATE);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        unbindService(connection);
-    }
-
-    private final ServiceConnection connection = new ServiceConnection() {
-
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            LocalBinder binder = (LocalBinder) service;
-            khoordiNeshanService = binder.getService();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-        }
-    };
 
     @Override
     protected void onDestroy() {
