@@ -76,5 +76,10 @@ public class MainActivityViewModel extends ViewModel {
     public MutableLiveData<LatLng> getDroppedPinLatLng() {
         return droppedPinLatLng;
     }
+
+    public void cancelRoutingRequest() {
+        routingRepository.cancelRoutingRequest();
+        mapUiState.setValue(new DO_NOT_FOLLOW_USER_LOCATION());
+    }
 }
 

@@ -134,7 +134,11 @@ public class MainActivity extends AppCompatActivity {
         hideLoadingState();
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("getting route, please wait...")
-                .setCancelable(false);
+                .setCancelable(false)
+                .setNegativeButton("cancel", (dialog, which) -> {
+                    mainActivityViewModel.cancelRoutingRequest();
+                    dialog.dismiss();
+                });
         loadingDialog = builder.create();
         loadingDialog.show();
     }

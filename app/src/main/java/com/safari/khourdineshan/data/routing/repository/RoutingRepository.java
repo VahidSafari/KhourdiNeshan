@@ -11,4 +11,6 @@ public interface RoutingRepository {
     LiveData<Result<Route>> getRouteResponseLiveData();
 
     void getCarRoute(LatLng originLatLng, LatLng destinationLatLng);
+
+    void cancelRoutingRequest();
 }

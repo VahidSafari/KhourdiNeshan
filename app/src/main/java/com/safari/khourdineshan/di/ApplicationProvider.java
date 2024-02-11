@@ -8,6 +8,8 @@ import androidx.annotation.NonNull;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.safari.khourdineshan.BuildConfig;
+import com.safari.khourdineshan.core.AuthorizationInterceptor;
 import com.safari.khourdineshan.core.BaseUrls;
 import com.safari.khourdineshan.data.location.datasource.LocationDataSourceImpl;
 import com.safari.khourdineshan.data.location.repository.DefaultLocationRepository;
@@ -112,7 +114,11 @@ public class ApplicationProvider {
                 .connectTimeout(REQUEST_TIME_OUT_IN_SECONDS, TimeUnit.SECONDS)
                 .callTimeout(REQUEST_TIME_OUT_IN_SECONDS, TimeUnit.SECONDS)
                 .writeTimeout(REQUEST_TIME_OUT_IN_SECONDS, TimeUnit.SECONDS)
-                .build();
+                .addInterceptor(getAuthorizationInterceptor()).build();
+    }
+
+    private AuthorizationInterceptor getAuthorizationInterceptor() {
+        return new AuthorizationInterceptor(BuildConfig.API_KEY);
     }
 
     public Context getApplicationContext() {
