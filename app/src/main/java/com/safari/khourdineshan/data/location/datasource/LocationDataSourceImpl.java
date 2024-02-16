@@ -17,6 +17,7 @@ import com.google.android.gms.location.LocationResult;
 public class LocationDataSourceImpl implements LocationDataSource {
 
     private final MutableLiveData<Location> locationMutableLiveData = new MutableLiveData<>();
+    private final MutableLiveData<Location> snappedLocationMutableLiveData = new MutableLiveData<>();
     private final FusedLocationProviderClient fusedLocationClient;
     private final LocationRequest locationRequest;
 
@@ -29,6 +30,12 @@ public class LocationDataSourceImpl implements LocationDataSource {
     @Override
     public LiveData<Location> getLiveLocation() {
         return locationMutableLiveData;
+    }
+
+    @NonNull
+    @Override
+    public LiveData<Location> getSnappedLiveLocation() {
+        return snappedLocationMutableLiveData;
     }
 
 
