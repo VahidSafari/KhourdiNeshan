@@ -3,7 +3,7 @@ package com.safari.khourdineshan.data.routing.repository;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.safari.khourdineshan.core.base.Result;
+import com.safari.khourdineshan.core.model.base.Result;
 import com.safari.khourdineshan.core.mapper.LocationMapper;
 import com.safari.khourdineshan.data.routing.datasource.RoutingService;
 
