@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.safari.khourdineshan.KhoordiNeshanService;
+import com.safari.khourdineshan.core.mapper.LocationMapper;
 import com.safari.khourdineshan.databinding.ActivityMainBinding;
 import com.safari.khourdineshan.di.MainActivityProvider;
 import com.safari.khourdineshan.utils.MapUtils;
@@ -169,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onNewLocationReceived(Location location) {
-        MapUtils.updateMarkerLocation(binding.map, MainActivityProvider.getInstance().getCurrentLocationMarker(this), location);
+        MainActivityProvider.getInstance().getCurrentLocationMarker(this).updateLatLng(LocationMapper.LocationToLatLng(location), binding.map);
         if (mainActivityViewModel.getMapUIState().getValue() instanceof FOLLOW_USER_LOCATION) {
             MapUtils.focusOnLocation(binding.map, location);
         }

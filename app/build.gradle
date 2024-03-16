@@ -15,8 +15,7 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField "String", "API_KEY", "\"${API_KEY}\""
-
+        buildConfigField 'String', 'API_KEY', '"' + API_KEY + '"'
     }
 
     signingConfigs {

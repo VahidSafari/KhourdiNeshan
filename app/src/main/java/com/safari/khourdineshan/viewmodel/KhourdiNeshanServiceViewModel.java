@@ -1,19 +1,23 @@
 package com.safari.khourdineshan.viewmodel;
 
 import android.location.Location;
+import android.util.Pair;
 
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.safari.khourdineshan.core.base.Result;
+import com.safari.khourdineshan.core.model.base.Result;
 import com.safari.khourdineshan.data.location.repository.LocationRepository;
 import com.safari.khourdineshan.data.routing.repository.RoutingRepository;
+import com.safari.khourdineshan.utils.LocationConverters;
 import com.safari.khourdineshan.utils.LocationOnRouteSnapper;
+import com.vividsolutions.jts.operation.distance.DistanceOp;
 
 import org.neshan.servicessdk.direction.model.DirectionResultLeg;
 import org.neshan.servicessdk.direction.model.DirectionStep;
 import org.neshan.servicessdk.direction.model.Route;
+
+import java.util.List;
 
 public class KhourdiNeshanServiceViewModel extends ViewModel {
 
@@ -21,41 +25,41 @@ public class KhourdiNeshanServiceViewModel extends ViewModel {
 
     private final LocationRepository locationRepository;
 
-    private final MediatorLiveData<DirectionResultLeg> remainingStepsToDestinationMutableLiveData = new MediatorLiveData<>();
+    private final MediatorLiveData<List<DirectionStep>> remainingStepsToDestinationMutableLiveData = new MediatorLiveData<>();
 
-    private final MediatorLiveData<Location> snappedLocationOnRouteLiveData = new MediatorLiveData<>();
+    private final MediatorLiveData<Pair<Location, DistanceOp>> snappedLocationOnRouteLiveData = new MediatorLiveData<>();
 
     public KhourdiNeshanServiceViewModel(RoutingRepository routingRepository, LocationRepository locationRepository) {
         this.routingRepository = routingRepository;
         this.locationRepository = locationRepository;
         remainingStepsToDestinationMutableLiveData.addSource(routingRepository.getRouteResponseLiveData(), this::updateRemainingSteps);
         remainingStepsToDestinationMutableLiveData.addSource(locationRepository.getLiveLocation(), this::updateRemainingSteps);
-        snappedLocationOnRouteLiveData.addSource(remainingStepsToDestinationMutableLiveData, this::updateSnappedLocation);
+        snappedLocationOnRouteLiveData.addSource(remainingStepsToDestinationMutableLiveData, this::updateRoute);
         snappedLocationOnRouteLiveData.addSource(locationRepository.getLiveLocation(), this::updateSnappedLocation);
     }
 
     private void updateSnappedLocation(Location location) {
         if (location != null && remainingStepsToDestinationMutableLiveData.getValue() != null) {
-            LocationOnRouteSnapper.snapLocationOnRoute(location, remainingStepsToDestinationMutableLiveData.getValue().getDirectionSteps());
+            Pair<Location, DistanceOp> locationDistanceOpPair = LocationOnRouteSnapper.snapLocationOnStep(location, remainingStepsToDestinationMutableLiveData.getValue().get(0));
+            snappedLocationOnRouteLiveData.setValue(locationDistanceOpPair);
         }
     }
 
-    private void updateSnappedLocation(DirectionResultLeg routeResult) {
-
+    private void updateRoute(List<DirectionStep> steps) {
+        snappedLocationOnRouteLiveData.setValue(new Pair<>(LocationConverters.getCoordinateFromLatLng(steps.get(0).getStartLocation()), null));
     }
 
-    private void updateRemainingSteps(Result<DirectionResultLeg> routeResult) {
+    private void updateRemainingSteps(Result<Route> routeResult) {
         if (routeResult instanceof Result.Success) {
-            remainingStepsToDestinationMutableLiveData.setValue(((Result.Success<DirectionResultLeg>) routeResult).getResult());
+            remainingStepsToDestinationMutableLiveData.setValue(((Result.Success<Route>) routeResult).getResult().getLegs().get(0).getDirectionSteps()); // currently middle destination is not supported
         }
     }
 
     private void updateRemainingSteps(Location location) {
-        remainingStepsToDestinationMutableLiveData.setValue();
-    }
-
-    private LiveData<DirectionStep> getRoutingLiveData() {
-        return routingRepository.getRouteResponseLiveData();
+        Pair<Location, DistanceOp> locationDistanceOpPair = LocationOnRouteSnapper.snapLocationOnStep(location, remainingStepsToDestinationMutableLiveData.getValue().get(1));
+        if (snappedLocationOnRouteLiveData.getValue().second.distance() > locationDistanceOpPair.second.distance()) {
+            remainingStepsToDestinationMutableLiveData.setValue(remainingStepsToDestinationMutableLiveData.getValue().subList(1, remainingStepsToDestinationMutableLiveData.getValue().size()));
+        }
     }
 
     @Override

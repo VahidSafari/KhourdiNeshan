@@ -13,6 +13,7 @@ import com.carto.styles.MarkerStyle;
 import com.carto.styles.MarkerStyleBuilder;
 import com.carto.utils.BitmapUtils;
 import com.safari.khourdineshan.R;
+import com.safari.khourdineshan.ui.CurrentLocationMarker;
 import com.safari.khourdineshan.viewmodel.MainActivityViewModelFactory;
 
 import org.neshan.mapsdk.model.Marker;
@@ -22,7 +23,7 @@ public class MainActivityProvider {
     private AnimationStyle markerAnimationStyle;
     private MarkerStyle currentLocationMarkerStyle;
     private MarkerStyle droppedPinMarkerStyle;
-    private Marker currentLocationMarker;
+    private CurrentLocationMarker currentLocationMarker;
     private Marker droppedPinMarker;
 
     public static void init() {
@@ -79,9 +80,9 @@ public class MainActivityProvider {
         return droppedPinMarkerStyle;
     }
 
-    public Marker getCurrentLocationMarker(Context context) {
+    public CurrentLocationMarker getCurrentLocationMarker(Context context) {
         if (currentLocationMarker == null) {
-            currentLocationMarker = new Marker(null, getCurrentLocationMarkerStyle(context));
+            currentLocationMarker = new CurrentLocationMarker(getCurrentLocationMarkerStyle(context));
         }
         return currentLocationMarker;
     }
