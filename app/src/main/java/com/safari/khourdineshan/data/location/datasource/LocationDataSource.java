@@ -9,8 +9,5 @@ public interface LocationDataSource {
     @NonNull
     LiveData<Location> getLiveLocation();
 
-    @NonNull
-    LiveData<Location> getSnappedLiveLocation();
-
     void startReceivingLocation();
 }
