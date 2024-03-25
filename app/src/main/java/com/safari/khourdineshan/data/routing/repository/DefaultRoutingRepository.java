@@ -41,7 +41,7 @@ public class DefaultRoutingRepository implements RoutingRepository {
             @Override
             public void onResponse(Call<NeshanDirectionResult> call, Response<NeshanDirectionResult> response) {
                 if (response.body() != null) {
-                    carRouteResult.setValue(new Result.Success<>(new Route()));
+                    carRouteResult.setValue(new Result.Success<>(response.body().getRoutes().get(0)));
                 } else {
                     try {
                         carRouteResult.setValue(new Result.Fail(new Throwable(response.errorBody() != null ? response.errorBody().string() : "request failed. try again")));

@@ -3,12 +3,13 @@ package com.safari.khourdineshan.viewmodel;
 import android.location.Location;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Transformations;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 
-import com.safari.khourdineshan.core.model.base.Result;
 import com.safari.khourdineshan.core.mapper.LocationMapper;
+import com.safari.khourdineshan.core.model.base.Result;
 import com.safari.khourdineshan.data.location.repository.LocationRepository;
 import com.safari.khourdineshan.data.routing.repository.RoutingRepository;
 import com.safari.khourdineshan.viewmodel.model.DO_NOT_FOLLOW_USER_LOCATION;
@@ -24,19 +25,19 @@ public class MainActivityViewModel extends ViewModel {
 
     private final LocationRepository locationRepository;
     private final RoutingRepository routingRepository;
-    private final MutableLiveData<MapUIState> mapUiState = new MutableLiveData<>(new FOLLOW_USER_LOCATION());
+    private final MediatorLiveData<MapUIState> mapUiState = new MediatorLiveData<>();
     private final MutableLiveData<LatLng> droppedPinLatLng = new MutableLiveData<>();
 
     public MainActivityViewModel(LocationRepository locationRepository, RoutingRepository routingRepository) {
         this.locationRepository = locationRepository;
         this.routingRepository = routingRepository;
-        Transformations.map(routingRepository.getRouteResponseLiveData(), routeResponseResult -> {
-            if (routeResponseResult instanceof Result.Success) {
-                mapUiState.setValue(new SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN(((Result.Success<Route>) routeResponseResult).getResult()));
-            } else if (routeResponseResult instanceof Result.Fail) {
+        mapUiState.setValue(new FOLLOW_USER_LOCATION());
+        mapUiState.addSource(routingRepository.getRouteResponseLiveData(), routeResult -> {
+            if (routeResult instanceof Result.Success) {
+                mapUiState.setValue(new SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN(((Result.Success<Route>) routeResult).getResult()));
+            } else if (routeResult instanceof Result.Fail) {
                 showErrorMessage();
             }
-            return routeResponseResult;
         });
     }
 
@@ -80,6 +81,12 @@ public class MainActivityViewModel extends ViewModel {
     public void cancelRoutingRequest() {
         routingRepository.cancelRoutingRequest();
         mapUiState.setValue(new DO_NOT_FOLLOW_USER_LOCATION());
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        mapUiState.removeSource(routingRepository.getRouteResponseLiveData());
     }
 }
 
