@@ -114,10 +114,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showNavigationState() {
+        binding.getRouteFab.hide();
         hideLoadingState();
     }
 
     private void showRoutingState(SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN state) {
+        binding.getRouteFab.hide();
         hideLoadingState();
         showRouteOnMap(state.getRoute());
     }
@@ -128,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showMapFollowState() {
+        binding.getRouteFab.hide();
         hideRoute();
         hideLoadingState();
     }
