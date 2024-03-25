@@ -177,6 +177,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        mainActivityViewModel.onMainActivityBackPressed();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         MainActivityProvider.deinit();
