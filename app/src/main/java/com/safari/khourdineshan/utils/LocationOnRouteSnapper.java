@@ -12,17 +12,22 @@ import com.vividsolutions.jts.operation.distance.DistanceOp;
 import org.neshan.common.utils.PolylineEncoding;
 import org.neshan.servicessdk.direction.model.DirectionStep;
 
+import java.util.List;
+
 public abstract class LocationOnRouteSnapper {
 
-    public static Pair<Location, DistanceOp> snapLocationOnStep(Location location, DirectionStep step) {
+    public static Pair<Location, DistanceOp> snapLocationOnRoute(Location location, List<DirectionStep> steps) {
         Point pt = new GeometryFactory().createPoint(new Coordinate(location.getLongitude(), location.getLatitude()));
-        LineString stepLineString = new GeometryFactory().createLineString(LocationConverters.getCoordinatesFromLatLng(PolylineEncoding.decode(step.getEncodedPolyline())));
-        DistanceOp distanceOp = new DistanceOp(pt, stepLineString);
-        Coordinate coordinate = distanceOp.nearestPoints()[1];
-        Location snappedLocation = new Location("jts");
-        snappedLocation.setLatitude(coordinate.y);
-        snappedLocation.setLongitude(coordinate.x);
-        return new Pair<>(snappedLocation, distanceOp);
+        for (DirectionStep directionStep : steps) {
+            LineString stepLineString = new GeometryFactory().createLineString(LocationConverters.getCoordinatesFromLatLng(PolylineEncoding.decode(directionStep.getEncodedPolyline())));
+            DistanceOp distanceOp = new DistanceOp(pt, stepLineString);
+            Coordinate coordinate = distanceOp.nearestPoints()[1];
+            Location snappedLocation = new Location("jts");
+            snappedLocation.setLatitude(coordinate.y);
+            snappedLocation.setLongitude(coordinate.x);
+            return new Pair<>(snappedLocation, distanceOp);
+        }
+        return null;
     }
 
 }

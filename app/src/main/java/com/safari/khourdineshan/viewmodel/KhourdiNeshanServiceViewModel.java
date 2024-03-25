@@ -40,7 +40,7 @@ public class KhourdiNeshanServiceViewModel extends ViewModel {
 
     private void updateSnappedLocation(Location location) {
         if (location != null && remainingStepsToDestinationMutableLiveData.getValue() != null) {
-            Pair<Location, DistanceOp> locationDistanceOpPair = LocationOnRouteSnapper.snapLocationOnStep(location, remainingStepsToDestinationMutableLiveData.getValue().get(0));
+            Pair<Location, DistanceOp> locationDistanceOpPair = LocationOnRouteSnapper.snapLocationOnRoute(location, remainingStepsToDestinationMutableLiveData.getValue());
             snappedLocationOnRouteLiveData.setValue(locationDistanceOpPair);
         }
     }
@@ -56,7 +56,7 @@ public class KhourdiNeshanServiceViewModel extends ViewModel {
     }
 
     private void updateRemainingSteps(Location location) {
-        Pair<Location, DistanceOp> locationDistanceOpPair = LocationOnRouteSnapper.snapLocationOnStep(location, remainingStepsToDestinationMutableLiveData.getValue().get(1));
+        Pair<Location, DistanceOp> locationDistanceOpPair = LocationOnRouteSnapper.snapLocationOnRoute(location, remainingStepsToDestinationMutableLiveData.getValue());
         if (snappedLocationOnRouteLiveData.getValue().second.distance() > locationDistanceOpPair.second.distance()) {
             remainingStepsToDestinationMutableLiveData.setValue(remainingStepsToDestinationMutableLiveData.getValue().subList(1, remainingStepsToDestinationMutableLiveData.getValue().size()));
         }
