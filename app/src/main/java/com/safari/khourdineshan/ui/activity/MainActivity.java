@@ -43,8 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     private MainActivityViewModel mainActivityViewModel;
     private AlertDialog loadingDialog;
-    private ArrayList<LatLng> routeOverviewPolylinePoints;
-    private ArrayList<LatLng> decodedStepByStepPath;
+    private ArrayList<LatLng> decodedStepByStepRoute;
     private Polyline onMapPolyline;
 
     @Override
@@ -124,10 +123,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showMapUnfollowState() {
+        hideRoute();
         hideLoadingState();
     }
 
     private void showMapFollowState() {
+        hideRoute();
         hideLoadingState();
     }
 
@@ -151,22 +152,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showRouteOnMap(Route route) {
-        routeOverviewPolylinePoints = new ArrayList<>(PolylineEncoding.decode(route.getOverviewPolyline().getEncodedPolyline()));
-        decodedStepByStepPath = new ArrayList<>();
-
-        // decoding each segment of steps and putting to an array
+        // DECODE
+        decodedStepByStepRoute = new ArrayList<>();
         for (DirectionStep step : route.getLegs().get(0).getDirectionSteps()) {
-            decodedStepByStepPath.addAll(PolylineEncoding.decode(step.getEncodedPolyline()));
+            decodedStepByStepRoute.addAll(PolylineEncoding.decode(step.getEncodedPolyline()));
         }
 
+        // HIDE PREVIOUS ROUTE
+        hideRoute();
+
+        // SHOW NEW ROUTE
+        onMapPolyline = MainActivityProvider.getInstance().getPolyline(decodedStepByStepRoute);
+        binding.map.addPolyline(onMapPolyline);
+
+        // FOCUS ON ROUTE
+        MapUtils.focusOnRectangleOfTwoPoints(binding.map, MainActivityProvider.getInstance().getCurrentLocationMarker(this).getLatLng(), MainActivityProvider.getInstance().getDroppedPinMarker(this).getLatLng());
+    }
+
+
+    private void hideRoute() {
         if (onMapPolyline != null) {
             binding.map.removePolyline(onMapPolyline);
+            onMapPolyline = null;
         }
-        onMapPolyline = new Polyline(routeOverviewPolylinePoints, MainActivityProvider.getInstance().getLineStyle());
-        //draw polyline between route points
-        binding.map.addPolyline(onMapPolyline);
-        // focusing camera on first point of drawn line
-        MapUtils.focusOnRectangleOfTwoPoints(binding.map, MainActivityProvider.getInstance().getCurrentLocationMarker(this).getLatLng(), MainActivityProvider.getInstance().getDroppedPinMarker(this).getLatLng());
     }
 
     private void onNewLocationReceived(Location location) {
@@ -178,8 +186,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
-        mainActivityViewModel.onMainActivityBackPressed();
+        if (mainActivityViewModel.getMapUIState().getValue() instanceof FOLLOW_USER_LOCATION) {
+            super.onBackPressed();
+        } else {
+            mainActivityViewModel.onMainActivityBackPressed();
+        }
     }
 
     @Override

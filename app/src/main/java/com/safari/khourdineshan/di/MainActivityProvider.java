@@ -16,7 +16,11 @@ import com.safari.khourdineshan.R;
 import com.safari.khourdineshan.ui.CurrentLocationMarker;
 import com.safari.khourdineshan.viewmodel.MainActivityViewModelFactory;
 
+import org.neshan.common.model.LatLng;
 import org.neshan.mapsdk.model.Marker;
+import org.neshan.mapsdk.model.Polyline;
+
+import java.util.ArrayList;
 
 public class MainActivityProvider {
     private static MainActivityProvider INSTANCE;
@@ -100,6 +104,10 @@ public class MainActivityProvider {
         lineStCr.setWidth(10f);
         lineStCr.setStretchFactor(0f);
         return lineStCr.buildStyle();
+    }
+
+    public Polyline getPolyline(ArrayList<LatLng> latLngs) {
+        return new Polyline(latLngs ,getLineStyle());
     }
 
     public static void deinit() {
