@@ -74,10 +74,6 @@ public class MainActivityViewModel extends ViewModel {
         }
     }
 
-    public void onMapClicked(LatLng latLng) {
-
-    }
-
     public void cancelRoutingRequest() {
         routingRepository.cancelRoutingRequest();
         uiStateMediatorLiveData.setValue(new MAP.DO_NOT_FOLLOW_USER_LOCATION());

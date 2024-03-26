@@ -57,7 +57,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void initClickListeners() {
         binding.map.setOnMapLongClickListener(latLng -> runOnUiThread(() -> mainActivityViewModel.onMapLongClicked(latLng)));
-        binding.map.setOnMapClickListener(latLng -> runOnUiThread(() -> mainActivityViewModel.onMapClicked(latLng)));
         binding.getRouteFab.setOnClickListener(v -> mainActivityViewModel.requestForRoute());
         binding.currentLocationFab.setOnClickListener(v -> mainActivityViewModel.onCurrentLocationFabClicked());
     }
