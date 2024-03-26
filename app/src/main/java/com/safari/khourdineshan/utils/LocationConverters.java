@@ -5,6 +5,8 @@ import android.location.Location;
 import androidx.annotation.Nullable;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.Point;
 
 import org.neshan.common.model.LatLng;
 
@@ -31,6 +33,17 @@ public class LocationConverters {
             coordinates[i] = new Coordinate(latLngList.get(i).getLongitude(), latLngList.get(i).getLatitude());
         }
         return coordinates;
+    }
+
+    public static Point LocationToPoint(Location location) {
+        return new GeometryFactory().createPoint(new Coordinate(location.getLongitude(), location.getLatitude()));
+    }
+
+    public static Location latLngToLocation(LatLng latLng) {
+        Location location = new Location("location provider");
+        location.setLatitude(latLng.getLatitude());
+        location.setLongitude(latLng.getLongitude());
+        return location;
     }
 
 }

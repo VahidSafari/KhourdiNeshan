@@ -20,12 +20,9 @@ import com.safari.khourdineshan.di.MainActivityProvider;
 import com.safari.khourdineshan.utils.MapUtils;
 import com.safari.khourdineshan.utils.PermissionUtils;
 import com.safari.khourdineshan.viewmodel.MainActivityViewModel;
-import com.safari.khourdineshan.viewmodel.model.DO_NOT_FOLLOW_USER_LOCATION;
-import com.safari.khourdineshan.viewmodel.model.FOLLOW_USER_LOCATION;
-import com.safari.khourdineshan.viewmodel.model.MapUIState;
+import com.safari.khourdineshan.viewmodel.model.MAP;
 import com.safari.khourdineshan.viewmodel.model.NAVIGATION;
-import com.safari.khourdineshan.viewmodel.model.SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN;
-import com.safari.khourdineshan.viewmodel.model.WAITING_FOR_ROUTE_RESPONSE;
+import com.safari.khourdineshan.viewmodel.model.UIState;
 
 import org.neshan.common.model.LatLng;
 import org.neshan.common.utils.PolylineEncoding;
@@ -59,9 +56,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initClickListeners() {
-        binding.map.setOnMapLongClickListener(latLng -> mainActivityViewModel.onMapLongClicked(latLng));
-        binding.map.setOnMapClickListener(latLng -> mainActivityViewModel.onMapClicked(latLng));
+        binding.map.setOnMapLongClickListener(latLng -> runOnUiThread(() -> mainActivityViewModel.onMapLongClicked(latLng)));
+        binding.map.setOnMapClickListener(latLng -> runOnUiThread(() -> mainActivityViewModel.onMapClicked(latLng)));
         binding.getRouteFab.setOnClickListener(v -> mainActivityViewModel.requestForRoute());
+        binding.currentLocationFab.setOnClickListener(v -> mainActivityViewModel.onCurrentLocationFabClicked());
     }
 
     private void checkLocationPermission() {
@@ -89,28 +87,31 @@ public class MainActivity extends AppCompatActivity {
         mainActivityViewModel = new ViewModelProvider(this, MainActivityProvider.getInstance().getMainActivityViewModelFactory()).get(MainActivityViewModel.class);
         mainActivityViewModel.getLiveLocation().observe(this, this::onNewLocationReceived);
         mainActivityViewModel.getMapUIState().observe(this, this::onMapUiStateChanged);
-        mainActivityViewModel.getDroppedPinLatLng().observe(this, this::onDroppedPinLatLngChanged);
     }
 
-    private void onDroppedPinLatLngChanged(LatLng latLng) {
+    private void onMapUiStateChanged(UIState uiState) {
+        if (uiState instanceof MAP) {
+            if (uiState instanceof MAP.FOLLOW_USER_LOCATION) {
+                showMapFollowState();
+            } else if (uiState instanceof MAP.DO_NOT_FOLLOW_USER_LOCATION) {
+                showMapUnfollowState();
+            } else if (uiState instanceof MAP.SHOW_DROPPED_PIN) {
+                showMapDroppedPinState((MAP.SHOW_DROPPED_PIN) uiState);
+            } else if (uiState instanceof MAP.WAITING_FOR_ROUTE_RESPONSE) {
+                showLoadingState();
+            } else if (uiState instanceof MAP.SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN) {
+                showRoutingState((MAP.SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN) uiState);
+            }
+        } else if (uiState instanceof NAVIGATION) {
+            showNavigationState();
+        }
+    }
+
+    private void showMapDroppedPinState(MAP.SHOW_DROPPED_PIN droppedPinState) {
         Marker droppedPinMarker = MainActivityProvider.getInstance().getDroppedPinMarker(this);
         binding.map.removeMarker(droppedPinMarker);
-        droppedPinMarker.setLatLng(latLng);
+        droppedPinMarker.setLatLng(droppedPinState.getPinLatLng());
         binding.map.addMarker(droppedPinMarker);
-    }
-
-    private void onMapUiStateChanged(MapUIState mapUIState) {
-        if (mapUIState instanceof FOLLOW_USER_LOCATION) {
-            showMapFollowState();
-        } else if (mapUIState instanceof DO_NOT_FOLLOW_USER_LOCATION) {
-            showMapUnfollowState();
-        } else if (mapUIState instanceof SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN) {
-            showRoutingState((SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN) mapUIState);
-        } else if (mapUIState instanceof NAVIGATION) {
-            showNavigationState();
-        } else if (mapUIState instanceof WAITING_FOR_ROUTE_RESPONSE) {
-            showLoadingState();
-        }
     }
 
     private void showNavigationState() {
@@ -118,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
         hideLoadingState();
     }
 
-    private void showRoutingState(SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN state) {
+    private void showRoutingState(MAP.SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN state) {
         binding.getRouteFab.hide();
         hideLoadingState();
         showRouteOnMap(state.getRoute());
@@ -182,14 +183,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void onNewLocationReceived(Location location) {
         MainActivityProvider.getInstance().getCurrentLocationMarker(this).updateLatLng(LocationMapper.LocationToLatLng(location), binding.map);
-        if (mainActivityViewModel.getMapUIState().getValue() instanceof FOLLOW_USER_LOCATION) {
+        if (mainActivityViewModel.getMapUIState().getValue() instanceof MAP.FOLLOW_USER_LOCATION) {
             MapUtils.focusOnLocation(binding.map, location);
         }
     }
 
     @Override
     public void onBackPressed() {
-        if (mainActivityViewModel.getMapUIState().getValue() instanceof FOLLOW_USER_LOCATION) {
+        if (mainActivityViewModel.getMapUIState().getValue() instanceof MAP.FOLLOW_USER_LOCATION) {
             super.onBackPressed();
         } else {
             mainActivityViewModel.onMainActivityBackPressed();

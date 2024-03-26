@@ -17,10 +17,9 @@ import java.util.List;
 public abstract class LocationOnRouteSnapper {
 
     public static Pair<Location, DistanceOp> snapLocationOnRoute(Location location, List<DirectionStep> steps) {
-        Point pt = new GeometryFactory().createPoint(new Coordinate(location.getLongitude(), location.getLatitude()));
         for (DirectionStep directionStep : steps) {
             LineString stepLineString = new GeometryFactory().createLineString(LocationConverters.getCoordinatesFromLatLng(PolylineEncoding.decode(directionStep.getEncodedPolyline())));
-            DistanceOp distanceOp = new DistanceOp(pt, stepLineString);
+            DistanceOp distanceOp = new DistanceOp(LocationConverters.LocationToPoint(location), stepLineString);
             Coordinate coordinate = distanceOp.nearestPoints()[1];
             Location snappedLocation = new Location("jts");
             snappedLocation.setLatitude(coordinate.y);

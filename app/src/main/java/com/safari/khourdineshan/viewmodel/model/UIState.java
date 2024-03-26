@@ -1,3 +1,4 @@
 package com.safari.khourdineshan.viewmodel.model;
 
-public abstract class MapUIState {}
+public abstract class UIState {
+}

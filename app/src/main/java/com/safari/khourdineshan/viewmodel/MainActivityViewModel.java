@@ -11,12 +11,9 @@ import com.safari.khourdineshan.core.mapper.LocationMapper;
 import com.safari.khourdineshan.core.model.base.Result;
 import com.safari.khourdineshan.data.location.repository.LocationRepository;
 import com.safari.khourdineshan.data.routing.repository.RoutingRepository;
-import com.safari.khourdineshan.viewmodel.model.DO_NOT_FOLLOW_USER_LOCATION;
-import com.safari.khourdineshan.viewmodel.model.FOLLOW_USER_LOCATION;
-import com.safari.khourdineshan.viewmodel.model.MapUIState;
+import com.safari.khourdineshan.viewmodel.model.MAP;
 import com.safari.khourdineshan.viewmodel.model.NAVIGATION;
-import com.safari.khourdineshan.viewmodel.model.SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN;
-import com.safari.khourdineshan.viewmodel.model.WAITING_FOR_ROUTE_RESPONSE;
+import com.safari.khourdineshan.viewmodel.model.UIState;
 
 import org.neshan.common.model.LatLng;
 import org.neshan.servicessdk.direction.model.Route;
@@ -25,16 +22,15 @@ public class MainActivityViewModel extends ViewModel {
 
     private final LocationRepository locationRepository;
     private final RoutingRepository routingRepository;
-    private final MediatorLiveData<MapUIState> mapUiState = new MediatorLiveData<>();
-    private final MutableLiveData<LatLng> droppedPinLatLng = new MutableLiveData<>();
+    private final MediatorLiveData<UIState> uiStateMediatorLiveData = new MediatorLiveData<>();
 
     public MainActivityViewModel(LocationRepository locationRepository, RoutingRepository routingRepository) {
         this.locationRepository = locationRepository;
         this.routingRepository = routingRepository;
-        mapUiState.setValue(new FOLLOW_USER_LOCATION());
-        mapUiState.addSource(routingRepository.getRouteResponseLiveData(), routeResult -> {
+        uiStateMediatorLiveData.setValue(new MAP.FOLLOW_USER_LOCATION());
+        uiStateMediatorLiveData.addSource(routingRepository.getRouteResponseLiveData(), routeResult -> {
             if (routeResult instanceof Result.Success) {
-                mapUiState.setValue(new SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN(((Result.Success<Route>) routeResult).getResult()));
+                uiStateMediatorLiveData.setValue(new MAP.SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN(((Result.Success<Route>) routeResult).getResult()));
             } else if (routeResult instanceof Result.Fail) {
                 showErrorMessage();
             }
@@ -53,54 +49,63 @@ public class MainActivityViewModel extends ViewModel {
         locationRepository.startReceivingLocation();
     }
 
-    public LiveData<MapUIState> getMapUIState() {
-        return mapUiState;
+    public LiveData<UIState> getMapUIState() {
+        return uiStateMediatorLiveData;
     }
 
     public void onMapLongClicked(LatLng latLng) {
-        if (mapUiState.getValue() instanceof DO_NOT_FOLLOW_USER_LOCATION || mapUiState.getValue() instanceof FOLLOW_USER_LOCATION) {
-            droppedPinLatLng.postValue(latLng);
+        if (isLongPressEnabledInCurrentState()) {
+            uiStateMediatorLiveData.setValue(new MAP.SHOW_DROPPED_PIN(latLng));
         } else {
             // long click is considered disabled in other modes
         }
     }
 
+    private boolean isLongPressEnabledInCurrentState() {
+        return uiStateMediatorLiveData.getValue() instanceof MAP.DO_NOT_FOLLOW_USER_LOCATION ||
+                uiStateMediatorLiveData.getValue() instanceof MAP.FOLLOW_USER_LOCATION ||
+                uiStateMediatorLiveData.getValue() instanceof MAP.SHOW_DROPPED_PIN;
+    }
+
     public void requestForRoute() {
-        mapUiState.setValue(new WAITING_FOR_ROUTE_RESPONSE());
-        routingRepository.getCarRoute(LocationMapper.LocationToLatLng(locationRepository.getLiveLocation().getValue()), droppedPinLatLng.getValue());
+        if (uiStateMediatorLiveData.getValue() instanceof MAP.SHOW_DROPPED_PIN) {
+            routingRepository.getCarRoute(LocationMapper.LocationToLatLng(locationRepository.getLiveLocation().getValue()), ((MAP.SHOW_DROPPED_PIN) uiStateMediatorLiveData.getValue()).getPinLatLng());
+            uiStateMediatorLiveData.setValue(new MAP.WAITING_FOR_ROUTE_RESPONSE());
+        }
     }
 
     public void onMapClicked(LatLng latLng) {
 
     }
 
-    public MutableLiveData<LatLng> getDroppedPinLatLng() {
-        return droppedPinLatLng;
-    }
-
     public void cancelRoutingRequest() {
         routingRepository.cancelRoutingRequest();
-        mapUiState.setValue(new DO_NOT_FOLLOW_USER_LOCATION());
+        uiStateMediatorLiveData.setValue(new MAP.DO_NOT_FOLLOW_USER_LOCATION());
     }
 
     @Override
     protected void onCleared() {
         super.onCleared();
-        mapUiState.removeSource(routingRepository.getRouteResponseLiveData());
+        uiStateMediatorLiveData.removeSource(routingRepository.getRouteResponseLiveData());
     }
 
     public void onMainActivityBackPressed() {
-        if (mapUiState.getValue() instanceof DO_NOT_FOLLOW_USER_LOCATION) {
-            mapUiState.setValue(new FOLLOW_USER_LOCATION());
-        } else if (mapUiState.getValue() instanceof FOLLOW_USER_LOCATION) {
+        UIState currentUiState = uiStateMediatorLiveData.getValue();
+        if (currentUiState instanceof MAP.DO_NOT_FOLLOW_USER_LOCATION) {
+            uiStateMediatorLiveData.setValue(new MAP.FOLLOW_USER_LOCATION());
+        } else if (currentUiState instanceof MAP.FOLLOW_USER_LOCATION) {
             // FOLLOW is the Default State
-        } else if (mapUiState.getValue() instanceof NAVIGATION) {
+        } else if (currentUiState instanceof NAVIGATION) {
             // TODO: show acknowledgement dialog
-        } else if (mapUiState.getValue() instanceof WAITING_FOR_ROUTE_RESPONSE) {
+        } else if (currentUiState instanceof MAP.WAITING_FOR_ROUTE_RESPONSE) {
             cancelRoutingRequest();
-        } else if (mapUiState.getValue() instanceof SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN) {
-            mapUiState.setValue(new DO_NOT_FOLLOW_USER_LOCATION());
+        } else if (currentUiState instanceof MAP.SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN) {
+            uiStateMediatorLiveData.setValue(new MAP.DO_NOT_FOLLOW_USER_LOCATION());
         }
+    }
+
+    public void onCurrentLocationFabClicked() {
+        uiStateMediatorLiveData.setValue(new MAP.FOLLOW_USER_LOCATION());
     }
 }
 
