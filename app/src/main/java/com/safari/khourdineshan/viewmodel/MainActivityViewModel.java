@@ -103,5 +103,9 @@ public class MainActivityViewModel extends ViewModel {
     public void onCurrentLocationFabClicked() {
         uiStateMediatorLiveData.setValue(new MAP.FOLLOW_USER_LOCATION());
     }
+
+    public void onStartNavigationButtonClicked() {
+        uiStateMediatorLiveData.setValue(new NAVIGATION.DEFAULT());
+    }
 }
 

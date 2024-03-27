@@ -1,19 +1,26 @@
 package com.safari.khourdineshan.ui.activity;
 
 import android.Manifest;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.safari.khourdineshan.KhoordiNeshanService;
+import com.safari.khourdineshan.R;
+import com.safari.khourdineshan.ServiceActions;
 import com.safari.khourdineshan.core.mapper.LocationMapper;
 import com.safari.khourdineshan.databinding.ActivityMainBinding;
 import com.safari.khourdineshan.di.MainActivityProvider;
@@ -42,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
     private AlertDialog loadingDialog;
     private ArrayList<LatLng> decodedStepByStepRoute;
     private Polyline onMapPolyline;
+    @Nullable
+    private ServiceActions serviceActions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         checkLocationPermission();
-        startService(new Intent(this, KhoordiNeshanService.class));
         initClickListeners();
     }
 
@@ -59,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
         binding.map.setOnMapLongClickListener(latLng -> runOnUiThread(() -> mainActivityViewModel.onMapLongClicked(latLng)));
         binding.getRouteFab.setOnClickListener(v -> mainActivityViewModel.requestForRoute());
         binding.currentLocationFab.setOnClickListener(v -> mainActivityViewModel.onCurrentLocationFabClicked());
+        binding.startNavigationFab.setOnClickListener(v -> mainActivityViewModel.onStartNavigationButtonClicked());
     }
 
     private void checkLocationPermission() {
@@ -112,32 +121,59 @@ public class MainActivity extends AppCompatActivity {
         droppedPinMarker.setLatLng(droppedPinState.getPinLatLng());
         binding.map.addMarker(droppedPinMarker);
         binding.getRouteFab.show();
+        binding.startNavigationFab.hide();
+        binding.currentLocationFab.show();
     }
 
     private void showNavigationState() {
         binding.getRouteFab.hide();
+        binding.startNavigationFab.hide();
+        binding.currentLocationFab.hide();
         hideLoadingState();
+        ServiceConnection serviceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                KhoordiNeshanService.KhoordiNeshanServiceBinder binder = (KhoordiNeshanService.KhoordiNeshanServiceBinder) service;
+                serviceActions = binder.getServiceActions();
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                serviceActions = null;
+            }
+        };
+
+        bindService(new Intent(this, KhoordiNeshanService.class), serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
     private void showRoutingState(MAP.SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN state) {
         binding.getRouteFab.hide();
+        binding.startNavigationFab.show();
+        binding.currentLocationFab.show();
         hideLoadingState();
         showRouteOnMap(state.getRoute());
     }
 
     private void showMapUnfollowState() {
         binding.getRouteFab.hide();
+        binding.startNavigationFab.hide();
+        binding.currentLocationFab.show();
         hideRoute();
         hideLoadingState();
     }
 
     private void showMapFollowState() {
         binding.getRouteFab.hide();
+        binding.startNavigationFab.hide();
+        binding.currentLocationFab.show();
         hideRoute();
         hideLoadingState();
     }
 
     private void showLoadingState() {
+        binding.getRouteFab.hide();
+        binding.startNavigationFab.hide();
+        binding.currentLocationFab.show();
         hideLoadingState();
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("getting route, please wait...")
@@ -192,10 +228,26 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         if (mainActivityViewModel.getMapUIState().getValue() instanceof MAP.FOLLOW_USER_LOCATION) {
-            super.onBackPressed();
+            showCloseAppConfirmation();
         } else {
             mainActivityViewModel.onMainActivityBackPressed();
         }
+    }
+
+    private void showCloseAppConfirmation() {
+        hideLoadingState();
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(getString(R.string.close_app))
+                .setCancelable(false)
+                .setPositiveButton(getString(R.string.yes), (dialog, which) -> {
+                    finish();
+                    if (serviceActions != null) {
+                        serviceActions.stop();
+                    }
+                })
+                .setNegativeButton(getString(R.string.no), (dialog, which) -> dialog.dismiss());
+        loadingDialog = builder.create();
+        loadingDialog.show();
     }
 
     @Override

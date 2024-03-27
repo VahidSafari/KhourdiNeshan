@@ -7,15 +7,15 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.IBinder;
 
-import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import com.safari.khourdineshan.ui.activity.MainActivity;
 import com.safari.khourdineshan.viewmodel.KhourdiNeshanServiceViewModel;
 
-public class KhoordiNeshanService extends Service {
+public class KhoordiNeshanService extends Service implements ServiceActions {
 
     public static final String SERVICE_CONTENT_TITLE = "نشان خوردی";
     public static final String SERVICE_CONTENT_TEXT = "در حال دریافت لوکیشن";
@@ -25,6 +25,12 @@ public class KhoordiNeshanService extends Service {
     private static final String CHANNEL_NAME = "Khoordi";
 
     private KhourdiNeshanServiceViewModel khourdiNeshanServiceViewModel;
+    private final IBinder binder = new KhoordiNeshanServiceBinder();
+    public class KhoordiNeshanServiceBinder extends Binder {
+        public ServiceActions getServiceActions() {
+            return KhoordiNeshanService.this;
+        }
+    }
 
     @Override
     public void onCreate() {
@@ -70,10 +76,19 @@ public class KhoordiNeshanService extends Service {
         stopForeground(true);
     }
 
-    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return binder;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        return super.onUnbind(intent);
+    }
+
+    @Override
+    public void stop() {
+        stopSelf();
     }
 
 }
