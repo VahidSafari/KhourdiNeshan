@@ -111,6 +111,7 @@ public class MainActivity extends AppCompatActivity {
         binding.map.removeMarker(droppedPinMarker);
         droppedPinMarker.setLatLng(droppedPinState.getPinLatLng());
         binding.map.addMarker(droppedPinMarker);
+        binding.getRouteFab.show();
     }
 
     private void showNavigationState() {
@@ -125,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showMapUnfollowState() {
+        binding.getRouteFab.hide();
         hideRoute();
         hideLoadingState();
     }
@@ -169,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
         binding.map.addPolyline(onMapPolyline);
 
         // FOCUS ON ROUTE
-        MapUtils.focusOnRectangleOfTwoPoints(binding.map, MainActivityProvider.getInstance().getCurrentLocationMarker(this).getLatLng(), MainActivityProvider.getInstance().getDroppedPinMarker(this).getLatLng());
+        MapUtils.focusOnRoute(binding.map, PolylineEncoding.decode(route.getOverviewPolyline().getEncodedPolyline()));
     }
 
 

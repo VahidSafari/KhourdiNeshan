@@ -2,11 +2,15 @@ package com.safari.khourdineshan.utils;
 
 import android.location.Location;
 
+import com.carto.core.ScreenBounds;
+import com.carto.core.ScreenPos;
 import com.safari.khourdineshan.core.mapper.LocationMapper;
 
 import org.neshan.common.model.LatLng;
+import org.neshan.common.model.LatLngBounds;
 import org.neshan.mapsdk.MapView;
-import org.neshan.mapsdk.model.Marker;
+
+import java.util.List;
 
 public class MapUtils {
 
@@ -15,13 +19,37 @@ public class MapUtils {
         mapView.setZoom(15, 0.5f);
     }
 
-    public static void focusOnRectangleOfTwoPoints(MapView mapView, LatLng latLng1, LatLng latLng2) {
-        double centerFirstMarkerX = latLng1.getLatitude();
-        double centerFirstMarkerY = latLng1.getLongitude();
-        double centerFocalPositionX = (centerFirstMarkerX + latLng2.getLatitude()) / 2;
-        double centerFocalPositionY = (centerFirstMarkerY + latLng2.getLongitude()) / 2;
-        mapView.moveCamera(new LatLng(centerFocalPositionX, centerFocalPositionY), 0.5f);
-        mapView.setZoom(14, 0.5f);
+    public static LatLngBounds FoundFitBound(List<LatLng> latLngs) {
+        double minLng = Double.MAX_VALUE;
+        double minLat = Double.MAX_VALUE;
+        double maxLng = Double.MIN_VALUE;
+        double maxLat = Double.MIN_VALUE;
+
+        for (LatLng latLng : latLngs) {
+            minLng = Math.min(minLng, latLng.getLongitude());
+            minLat = Math.min(minLat, latLng.getLatitude());
+            maxLng = Math.max(maxLng, latLng.getLongitude());
+            maxLat = Math.max(maxLat, latLng.getLatitude());
+        }
+        return new LatLngBounds(new LatLng(minLat, minLng), new LatLng(maxLat, maxLng));
+    }
+
+    public static void focusOnRoute(MapView mapView, List<LatLng> latLngs) {
+
+        mapView.setTilt(90, 0);
+        mapView.setRotationX(0);
+        mapView.setRotationY(0);
+
+        int width = mapView.getWidth();
+        int height = mapView.getHeight();
+        int marginFromRectangleToMapView = width / 10;
+        ScreenBounds screenBounds = new ScreenBounds(
+                new ScreenPos(marginFromRectangleToMapView, marginFromRectangleToMapView),
+                new ScreenPos(width - marginFromRectangleToMapView, height - marginFromRectangleToMapView)
+        );
+
+        LatLngBounds fitBound = FoundFitBound(latLngs);
+        mapView.moveToCameraBounds(fitBound, screenBounds, false, 0.5f);
     }
 
 }
