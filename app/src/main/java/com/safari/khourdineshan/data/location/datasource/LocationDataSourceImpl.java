@@ -2,6 +2,7 @@ package com.safari.khourdineshan.data.location.datasource;
 
 import android.Manifest;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Looper;
 
 import androidx.annotation.NonNull;
@@ -18,10 +19,12 @@ public class LocationDataSourceImpl implements LocationDataSource {
 
     private final MutableLiveData<Location> locationMutableLiveData = new MutableLiveData<>();
     private final FusedLocationProviderClient fusedLocationClient;
+    private final LocationManager locationManager;
     private final LocationRequest locationRequest;
 
-    public LocationDataSourceImpl(FusedLocationProviderClient fusedLocationClient, LocationRequest locationRequest) {
+    public LocationDataSourceImpl(FusedLocationProviderClient fusedLocationClient, LocationManager locationManager, LocationRequest locationRequest) {
         this.fusedLocationClient = fusedLocationClient;
+        this.locationManager = locationManager;
         this.locationRequest = locationRequest;
     }
 
@@ -46,6 +49,12 @@ public class LocationDataSourceImpl implements LocationDataSource {
                 },
                 Looper.getMainLooper()
         );
+    }
+
+    @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+    @Override
+    public boolean isGpsProviderEnabled() {
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
 }

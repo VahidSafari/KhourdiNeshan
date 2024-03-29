@@ -1,7 +1,9 @@
 package com.safari.khourdineshan.viewmodel;
 
+import android.Manifest;
 import android.location.Location;
 
+import androidx.annotation.RequiresPermission;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -45,8 +47,14 @@ public class MainActivityViewModel extends ViewModel {
         return locationRepository.getLiveLocation();
     }
 
+    @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     public void startReceivingLocation() {
         locationRepository.startReceivingLocation();
+    }
+
+    @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+    public boolean isGpsProviderEnabled() {
+        return locationRepository.isGpsProviderEnabled();
     }
 
     public LiveData<UIState> getMapUIState() {
@@ -106,6 +114,12 @@ public class MainActivityViewModel extends ViewModel {
 
     public void onStartNavigationButtonClicked() {
         uiStateMediatorLiveData.setValue(new NAVIGATION.DEFAULT());
+    }
+
+    public void onMapClicked(LatLng latLng) {
+        if (uiStateMediatorLiveData.getValue() instanceof MAP.FOLLOW_USER_LOCATION) {
+            uiStateMediatorLiveData.setValue(new MAP.DO_NOT_FOLLOW_USER_LOCATION());
+        }
     }
 }
 

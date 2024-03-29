@@ -2,8 +2,10 @@ package com.safari.khourdineshan.di;
 
 import android.app.Application;
 import android.content.Context;
+import android.location.LocationManager;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
@@ -62,13 +64,22 @@ public class ApplicationProvider {
 
     public LocationRepository getLocationRepositorySingleInstance() {
         if (defaultLocationRepository == null) {
-            defaultLocationRepository = new DefaultLocationRepository(getLocationDataSource(getFusedLocationProvider(getApplicationContext()), getLocationRequest()));
+            defaultLocationRepository =
+                    new DefaultLocationRepository(
+                            getLocationDataSource(getFusedLocationProvider(getApplicationContext()),
+                                    getLocationManager(getApplicationContext()),
+                                    getLocationRequest())
+                    );
         }
         return defaultLocationRepository;
     }
 
-    public LocationDataSourceImpl getLocationDataSource(FusedLocationProviderClient fusedLocationProviderClient, LocationRequest locationRequest) {
-        return new LocationDataSourceImpl(fusedLocationProviderClient, locationRequest);
+    public static LocationManager getLocationManager(Context context) {
+        return (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+    }
+
+    public LocationDataSourceImpl getLocationDataSource(FusedLocationProviderClient fusedLocationProviderClient, LocationManager locationManager, LocationRequest locationRequest) {
+        return new LocationDataSourceImpl(fusedLocationProviderClient, locationManager, locationRequest);
     }
 
     public FusedLocationProviderClient getFusedLocationProvider(Context context) {

@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.Settings;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -25,7 +26,7 @@ import com.safari.khourdineshan.core.mapper.LocationMapper;
 import com.safari.khourdineshan.databinding.ActivityMainBinding;
 import com.safari.khourdineshan.di.MainActivityProvider;
 import com.safari.khourdineshan.utils.MapUtils;
-import com.safari.khourdineshan.utils.PermissionUtils;
+import com.safari.khourdineshan.viewmodel.KhourdiNeshanServiceViewModel;
 import com.safari.khourdineshan.viewmodel.MainActivityViewModel;
 import com.safari.khourdineshan.viewmodel.model.MAP;
 import com.safari.khourdineshan.viewmodel.model.NAVIGATION;
@@ -52,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
     @Nullable
     private ServiceActions serviceActions;
 
+    private KhourdiNeshanServiceViewModel khourdiNeshanServiceViewModel;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,19 +62,41 @@ public class MainActivity extends AppCompatActivity {
         initMainActivityViewModel();
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        checkLocationPermission();
+        checkLocationPermissionAndStartReceivingLocation();
         initClickListeners();
     }
 
     private void initClickListeners() {
         binding.map.setOnMapLongClickListener(latLng -> runOnUiThread(() -> mainActivityViewModel.onMapLongClicked(latLng)));
+        binding.map.setOnMapClickListener(latLng -> runOnUiThread(() -> mainActivityViewModel.onMapClicked(latLng)));
         binding.getRouteFab.setOnClickListener(v -> mainActivityViewModel.requestForRoute());
-        binding.currentLocationFab.setOnClickListener(v -> mainActivityViewModel.onCurrentLocationFabClicked());
+        binding.currentLocationFab.setOnClickListener(v -> notifyViewModelOrPromptUserToEnableGPS());
         binding.startNavigationFab.setOnClickListener(v -> mainActivityViewModel.onStartNavigationButtonClicked());
     }
 
-    private void checkLocationPermission() {
-        if (PermissionUtils.isFineLocationPermissionGranted(this)) {
+    private void notifyViewModelOrPromptUserToEnableGPS() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if (mainActivityViewModel.isGpsProviderEnabled()) {
+                mainActivityViewModel.onCurrentLocationFabClicked();
+            } else {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setMessage(getString(R.string.enable_gps))
+                        .setTitle(getString(R.string.precise_location_is_disabled));
+                builder.setPositiveButton(getString(R.string.enable), (dialog, which) -> {
+                            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                            startActivity(intent);
+                            dialog.dismiss();
+                        })
+                        .setNegativeButton(getString(R.string.cancel), (dialog, which) -> dialog.dismiss())
+                        .show();
+            }
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    private void checkLocationPermissionAndStartReceivingLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             mainActivityViewModel.startReceivingLocation();
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
@@ -82,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 mainActivityViewModel.startReceivingLocation();
             } else {
                 // Permission denied

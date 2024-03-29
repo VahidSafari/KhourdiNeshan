@@ -26,5 +26,10 @@ public class DefaultLocationRepository implements LocationRepository {
         locationDataSource.startReceivingLocation();
     }
 
+    @Override
+    public boolean isGpsProviderEnabled() {
+        return locationDataSource.isGpsProviderEnabled();
+    }
+
 
 }
