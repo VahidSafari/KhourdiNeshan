@@ -12,10 +12,12 @@ import android.os.IBinder;
 
 import androidx.core.app.NotificationCompat;
 
+import com.safari.khourdineshan.data.navigator.NavigatorManager;
+import com.safari.khourdineshan.di.ApplicationProvider;
+import com.safari.khourdineshan.di.NavigatorProvider;
 import com.safari.khourdineshan.ui.activity.MainActivity;
-import com.safari.khourdineshan.viewmodel.KhourdiNeshanServiceViewModel;
 
-public class KhoordiNeshanService extends Service implements ServiceActions {
+public class NavigatorIService extends Service implements IServiceConnection {
 
     public static final String SERVICE_CONTENT_TITLE = "نشان خوردی";
     public static final String SERVICE_CONTENT_TEXT = "در حال دریافت لوکیشن";
@@ -23,12 +25,12 @@ public class KhoordiNeshanService extends Service implements ServiceActions {
     private static final int NOTIFICATION_ID = 54832;
     private static final String CHANNEL_ID = "KhoordiNeshanService54832";
     private static final String CHANNEL_NAME = "Khoordi";
-
-    private KhourdiNeshanServiceViewModel khourdiNeshanServiceViewModel;
     private final IBinder binder = new KhoordiNeshanServiceBinder();
+    private NavigatorProvider navigatorProvider;
+
     public class KhoordiNeshanServiceBinder extends Binder {
-        public ServiceActions getServiceActions() {
-            return KhoordiNeshanService.this;
+        public IServiceConnection getServiceActions() {
+            return NavigatorIService.this;
         }
     }
 
@@ -36,6 +38,7 @@ public class KhoordiNeshanService extends Service implements ServiceActions {
     public void onCreate() {
         super.onCreate();
         startForeground(NOTIFICATION_ID, getNotification());
+        NavigatorProvider.init(ApplicationProvider.getInstance());
     }
 
     @Override
@@ -74,6 +77,7 @@ public class KhoordiNeshanService extends Service implements ServiceActions {
     public void onDestroy() {
         super.onDestroy();
         stopForeground(true);
+        NavigatorProvider.getInstance().deInit();
     }
 
     @Override
@@ -89,6 +93,11 @@ public class KhoordiNeshanService extends Service implements ServiceActions {
     @Override
     public void stop() {
         stopSelf();
+    }
+
+    @Override
+    public NavigatorManager getNavigatorManager() {
+        return NavigatorProvider.getInstance().getNavigatorManagerSingleton();
     }
 
 }

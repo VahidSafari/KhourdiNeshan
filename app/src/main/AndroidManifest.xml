@@ -34,7 +34,7 @@
                 android:value="" />
         </activity>
 
-        <service android:name=".KhoordiNeshanService"
+        <service android:name=".NavigatorIService"
             android:exported="false">
         </service>
 

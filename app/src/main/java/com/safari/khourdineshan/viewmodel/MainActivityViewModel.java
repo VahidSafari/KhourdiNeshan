@@ -6,12 +6,12 @@ import android.location.Location;
 import androidx.annotation.RequiresPermission;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
-import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.safari.khourdineshan.core.mapper.LocationMapper;
 import com.safari.khourdineshan.core.model.base.Result;
 import com.safari.khourdineshan.data.location.repository.LocationRepository;
+import com.safari.khourdineshan.data.navigator.NavigatorManager;
 import com.safari.khourdineshan.data.routing.repository.RoutingRepository;
 import com.safari.khourdineshan.viewmodel.model.MAP;
 import com.safari.khourdineshan.viewmodel.model.NAVIGATION;

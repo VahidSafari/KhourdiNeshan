@@ -5,7 +5,6 @@ import android.content.Context;
 import android.location.LocationManager;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
@@ -16,6 +15,7 @@ import com.safari.khourdineshan.core.BaseUrls;
 import com.safari.khourdineshan.data.location.datasource.LocationDataSourceImpl;
 import com.safari.khourdineshan.data.location.repository.DefaultLocationRepository;
 import com.safari.khourdineshan.data.location.repository.LocationRepository;
+import com.safari.khourdineshan.data.navigator.NavigatorManager;
 import com.safari.khourdineshan.data.routing.datasource.RoutingService;
 import com.safari.khourdineshan.data.routing.repository.DefaultRoutingRepository;
 import com.safari.khourdineshan.data.routing.repository.RoutingRepository;
@@ -62,7 +62,7 @@ public class ApplicationProvider {
         }
     }
 
-    public LocationRepository getLocationRepositorySingleInstance() {
+    public LocationRepository getLocationRepositorySingleton() {
         if (defaultLocationRepository == null) {
             defaultLocationRepository =
                     new DefaultLocationRepository(
@@ -74,7 +74,7 @@ public class ApplicationProvider {
         return defaultLocationRepository;
     }
 
-    public static LocationManager getLocationManager(Context context) {
+    public LocationManager getLocationManager(Context context) {
         return (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
     }
 
@@ -94,7 +94,7 @@ public class ApplicationProvider {
     }
 
     @NonNull
-    public RoutingRepository getSingletonRoutingRepository() {
+    public RoutingRepository getRoutingRepositorySingleton() {
         if (routingRepository == null) {
             routingRepository = new DefaultRoutingRepository(getRoutingService());
         }
@@ -109,7 +109,7 @@ public class ApplicationProvider {
     @NonNull
     private Retrofit getSingletonRetrofit() {
         if (retrofit == null) {
-            return new Retrofit.Builder()
+            retrofit = new Retrofit.Builder()
                     .client(getOkhttpClient())
                     .baseUrl(BaseUrls.ROUTING_BASE_URL)
                     .addConverterFactory(GsonConverterFactory.create())

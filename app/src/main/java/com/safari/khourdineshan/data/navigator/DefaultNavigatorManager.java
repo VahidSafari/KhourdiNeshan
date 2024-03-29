@@ -1,10 +1,10 @@
-package com.safari.khourdineshan.viewmodel;
+package com.safari.khourdineshan.data.navigator;
 
 import android.location.Location;
 import android.util.Pair;
 
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
-import androidx.lifecycle.ViewModel;
 
 import com.safari.khourdineshan.core.model.base.Result;
 import com.safari.khourdineshan.data.location.repository.LocationRepository;
@@ -13,13 +13,12 @@ import com.safari.khourdineshan.utils.LocationConverters;
 import com.safari.khourdineshan.utils.LocationOnRouteSnapper;
 import com.vividsolutions.jts.operation.distance.DistanceOp;
 
-import org.neshan.servicessdk.direction.model.DirectionResultLeg;
 import org.neshan.servicessdk.direction.model.DirectionStep;
 import org.neshan.servicessdk.direction.model.Route;
 
 import java.util.List;
 
-public class KhourdiNeshanServiceViewModel extends ViewModel {
+public class DefaultNavigatorManager implements NavigatorManager {
 
     private final RoutingRepository routingRepository;
 
@@ -29,13 +28,9 @@ public class KhourdiNeshanServiceViewModel extends ViewModel {
 
     private final MediatorLiveData<Pair<Location, DistanceOp>> snappedLocationOnRouteLiveData = new MediatorLiveData<>();
 
-    public KhourdiNeshanServiceViewModel(RoutingRepository routingRepository, LocationRepository locationRepository) {
+    public DefaultNavigatorManager(RoutingRepository routingRepository, LocationRepository locationRepository) {
         this.routingRepository = routingRepository;
         this.locationRepository = locationRepository;
-        remainingStepsToDestinationMutableLiveData.addSource(routingRepository.getRouteResponseLiveData(), this::updateRemainingSteps);
-        remainingStepsToDestinationMutableLiveData.addSource(locationRepository.getLiveLocation(), this::updateRemainingSteps);
-        snappedLocationOnRouteLiveData.addSource(remainingStepsToDestinationMutableLiveData, this::updateRoute);
-        snappedLocationOnRouteLiveData.addSource(locationRepository.getLiveLocation(), this::updateSnappedLocation);
     }
 
     private void updateSnappedLocation(Location location) {
@@ -62,14 +57,38 @@ public class KhourdiNeshanServiceViewModel extends ViewModel {
         }
     }
 
+
     @Override
-    protected void onCleared() {
+    public void start() {
+        remainingStepsToDestinationMutableLiveData.addSource(routingRepository.getRouteResponseLiveData(), this::updateRemainingSteps);
+        remainingStepsToDestinationMutableLiveData.addSource(locationRepository.getLiveLocation(), this::updateRemainingSteps);
+        snappedLocationOnRouteLiveData.addSource(remainingStepsToDestinationMutableLiveData, this::updateRoute);
+        snappedLocationOnRouteLiveData.addSource(locationRepository.getLiveLocation(), this::updateSnappedLocation);
+    }
+
+    @Override
+    public LiveData<Location> snappedLocationOnCurrentRoute() {
+        return null;
+    }
+
+    @Override
+    public LiveData<DirectionStep> currentStep() {
+        return null;
+    }
+
+    @Override
+    public LiveData<DirectionStep> NextStep() {
+        return null;
+    }
+
+    @Override
+    public void stop() {
         remainingStepsToDestinationMutableLiveData.removeSource(routingRepository.getRouteResponseLiveData());
         remainingStepsToDestinationMutableLiveData.removeSource(locationRepository.getLiveLocation());
 
         snappedLocationOnRouteLiveData.removeSource(remainingStepsToDestinationMutableLiveData);
         snappedLocationOnRouteLiveData.removeSource(locationRepository.getLiveLocation());
 
-        super.onCleared();
     }
+
 }

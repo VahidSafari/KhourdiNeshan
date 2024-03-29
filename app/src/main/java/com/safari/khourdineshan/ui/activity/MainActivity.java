@@ -19,14 +19,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.safari.khourdineshan.KhoordiNeshanService;
+import com.safari.khourdineshan.IServiceConnection;
+import com.safari.khourdineshan.NavigatorIService;
 import com.safari.khourdineshan.R;
-import com.safari.khourdineshan.ServiceActions;
 import com.safari.khourdineshan.core.mapper.LocationMapper;
 import com.safari.khourdineshan.databinding.ActivityMainBinding;
 import com.safari.khourdineshan.di.MainActivityProvider;
 import com.safari.khourdineshan.utils.MapUtils;
-import com.safari.khourdineshan.viewmodel.KhourdiNeshanServiceViewModel;
 import com.safari.khourdineshan.viewmodel.MainActivityViewModel;
 import com.safari.khourdineshan.viewmodel.model.MAP;
 import com.safari.khourdineshan.viewmodel.model.NAVIGATION;
@@ -51,9 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<LatLng> decodedStepByStepRoute;
     private Polyline onMapPolyline;
     @Nullable
-    private ServiceActions serviceActions;
-
-    private KhourdiNeshanServiceViewModel khourdiNeshanServiceViewModel;
+    private IServiceConnection serviceConnection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -157,18 +154,21 @@ public class MainActivity extends AppCompatActivity {
         hideLoadingState();
         ServiceConnection serviceConnection = new ServiceConnection() {
             @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                KhoordiNeshanService.KhoordiNeshanServiceBinder binder = (KhoordiNeshanService.KhoordiNeshanServiceBinder) service;
-                serviceActions = binder.getServiceActions();
+            public void onServiceConnected(ComponentName name, IBinder serviceIBinder) {
+                NavigatorIService.KhoordiNeshanServiceBinder binder = (NavigatorIService.KhoordiNeshanServiceBinder) serviceIBinder;
+                MainActivity.this.serviceConnection = binder.getServiceActions();
+                MainActivity.this.serviceConnection.getNavigatorManager().currentStep().observe(MainActivity.this, directionStep -> binding.navigatorCurrentStepTextView.setText(directionStep.getName()));
+                MainActivity.this.serviceConnection.getNavigatorManager().NextStep().observe(MainActivity.this, directionStep -> binding.navigatorNextStepTextView.setText(directionStep.getName()));
+                MainActivity.this.serviceConnection.getNavigatorManager().snappedLocationOnCurrentRoute().observe(MainActivity.this, location -> updateCurrentLocationMarkerLatLng(location));
             }
 
             @Override
             public void onServiceDisconnected(ComponentName name) {
-                serviceActions = null;
+                MainActivity.this.serviceConnection = null;
             }
         };
 
-        bindService(new Intent(this, KhoordiNeshanService.class), serviceConnection, Context.BIND_AUTO_CREATE);
+        bindService(new Intent(this, NavigatorIService.class), serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
     private void showRoutingState(MAP.SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN state) {
@@ -244,10 +244,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onNewLocationReceived(Location location) {
-        MainActivityProvider.getInstance().getCurrentLocationMarker(this).updateLatLng(LocationMapper.LocationToLatLng(location), binding.map);
-        if (mainActivityViewModel.getMapUIState().getValue() instanceof MAP.FOLLOW_USER_LOCATION) {
-            MapUtils.focusOnLocation(binding.map, location);
+        if (mainActivityViewModel.getMapUIState().getValue() instanceof MAP) {
+            updateCurrentLocationMarkerLatLng(location);
+            if (mainActivityViewModel.getMapUIState().getValue() instanceof MAP.FOLLOW_USER_LOCATION) {
+                MapUtils.focusOnLocation(binding.map, location);
+            }
         }
+    }
+
+    private void updateCurrentLocationMarkerLatLng(Location location) {
+        MainActivityProvider.getInstance().getCurrentLocationMarker(this).updateLatLng(LocationMapper.LocationToLatLng(location), binding.map);
     }
 
     @Override
@@ -266,8 +272,8 @@ public class MainActivity extends AppCompatActivity {
                 .setCancelable(false)
                 .setPositiveButton(getString(R.string.yes), (dialog, which) -> {
                     finish();
-                    if (serviceActions != null) {
-                        serviceActions.stop();
+                    if (serviceConnection != null) {
+                        serviceConnection.stop();
                     }
                 })
                 .setNegativeButton(getString(R.string.no), (dialog, which) -> dialog.dismiss());
