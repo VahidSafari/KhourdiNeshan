@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 
 import com.safari.khourdineshan.data.navigator.NavigatorManager;
@@ -95,6 +96,7 @@ public class NavigatorService extends Service implements IServiceConnection {
         stopSelf();
     }
 
+    @NonNull
     @Override
     public NavigatorManager getNavigatorManager() {
         return NavigatorProvider.getInstance().getNavigatorManagerSingleton();

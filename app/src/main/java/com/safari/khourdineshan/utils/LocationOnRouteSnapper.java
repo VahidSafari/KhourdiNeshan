@@ -23,7 +23,7 @@ public abstract class LocationOnRouteSnapper {
         Double bestSnappedCoordinateDistanceToRoute = null;
         int bestSnappedLocationStepIndex = 0;
         if (location != null) {
-            for (int i = 0; i < steps.size(); i++) {
+            for (int i = 0; i < steps.size() - 1; i++) {
                 DirectionStep directionStep = steps.get(i);
                 LineString stepLineString = new GeometryFactory().createLineString(LocationConverters.getCoordinatesFromLatLng(PolylineEncoding.decode(directionStep.getEncodedPolyline())));
                 DistanceOp distanceOp = new DistanceOp(LocationConverters.LocationToPoint(location), stepLineString);

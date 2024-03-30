@@ -40,6 +40,7 @@ import org.neshan.servicessdk.direction.model.Route;
 
 import java.util.ArrayList;
 
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 
@@ -66,12 +67,16 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
         checkLocationPermissionAndStartReceivingLocation();
         initClickListeners();
+
+        binding.navigatorCurrentStepTextView.setText("current");
+        binding.navigatorNextStepTextView.setText("next");
+
+
     }
 
     private void initClickListeners() {
         binding.map.setOnMapLongClickListener(latLng -> runOnUiThread(() -> mainActivityViewModel.onMapLongClicked(latLng)));
-        binding.map.setOnMapClickListener(latLng -> runOnUiThread(() -> mainActivityViewModel.onMapClicked(latLng)));
-        binding.getRouteFab.setOnClickListener(v -> mainActivityViewModel.requestForRoute());
+        binding.getRouteFab.setOnClickListener(v -> mainActivityViewModel.onGetRouteFabClicked());
         binding.currentLocationFab.setOnClickListener(v -> notifyViewModelOrPromptUserToEnableGPS());
         binding.startNavigationFab.setOnClickListener(v -> mainActivityViewModel.onStartNavigationButtonClicked());
     }
@@ -153,10 +158,6 @@ public class MainActivity extends AppCompatActivity {
         binding.currentLocationFab.show();
     }
 
-    private void showDroppedPin() {
-
-    }
-
     private void showNavigationState() {
         binding.getRouteFab.hide();
         binding.startNavigationFab.hide();
@@ -168,21 +169,31 @@ public class MainActivity extends AppCompatActivity {
                 NavigatorService.KhoordiNeshanServiceBinder binder = (NavigatorService.KhoordiNeshanServiceBinder) serviceIBinder;
                 MainActivity.this.serviceConnection = binder.getServiceActions();
 
-                Disposable currentStepDisposable = MainActivity.this.serviceConnection.getNavigatorManager().currentStepObservable().subscribe(directionStep -> {
-                    binding.navigatorCurrentStepTextView.setText(directionStep.getName());
-                    Toast.makeText(MainActivity.this, directionStep.getName(), Toast.LENGTH_LONG).show();
-                }, Throwable::printStackTrace);
+                if (navigatorCompositeObservationDisposable != null && !navigatorCompositeObservationDisposable.isDisposed()) {
+                    navigatorCompositeObservationDisposable.dispose();
+                }
+                navigatorCompositeObservationDisposable = new CompositeDisposable();
+                if (MainActivity.this.serviceConnection != null) {
+                    Disposable currentStepDisposable = MainActivity.this.serviceConnection.getNavigatorManager().currentStepObservable()
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(directionStep -> {
+                                binding.navigatorCurrentStepTextView.setText(directionStep.getName());
+                                Toast.makeText(MainActivity.this, directionStep.getName(), Toast.LENGTH_LONG).show();
+                            }, Throwable::printStackTrace);
 
-                Disposable nextStepDisposable = MainActivity.this.serviceConnection.getNavigatorManager().nextStepObservable().subscribe(directionStep -> {
-                    binding.navigatorNextStepTextView.setText(directionStep.getName());
-                    Toast.makeText(MainActivity.this, directionStep.getName(), Toast.LENGTH_LONG).show();
-                }, Throwable::printStackTrace);
+                    Disposable nextStepDisposable = MainActivity.this.serviceConnection.getNavigatorManager().nextStepObservable()
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(directionStep -> {
+                                binding.navigatorNextStepTextView.setText(directionStep.getName());
+                                Toast.makeText(MainActivity.this, directionStep.getName(), Toast.LENGTH_LONG).show();
+                            }, Throwable::printStackTrace);
 
-                Disposable snappedLocationDisposable = MainActivity.this.serviceConnection.getNavigatorManager().snappedLocationOnCurrentRoute().subscribe(location -> {
-                    updateCurrentLocationMarkerLatLng(location);
-                }, Throwable::printStackTrace);
+                    Disposable snappedLocationDisposable = MainActivity.this.serviceConnection.getNavigatorManager().snappedLocationOnCurrentRoute()
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(location -> updateCurrentLocationMarkerLatLng(location), Throwable::printStackTrace);
 
-                navigatorCompositeObservationDisposable.addAll(currentStepDisposable, nextStepDisposable, snappedLocationDisposable);
+                    navigatorCompositeObservationDisposable.addAll(currentStepDisposable, nextStepDisposable, snappedLocationDisposable);
+                }
             }
 
             @Override

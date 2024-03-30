@@ -5,7 +5,6 @@ import android.location.Location;
 
 import androidx.annotation.RequiresPermission;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
@@ -85,10 +84,13 @@ public class MainActivityViewModel extends ViewModel {
                 uiStateMutableLiveData.getValue() instanceof MAP.SHOW_DROPPED_PIN;
     }
 
-    public void requestForRoute() {
+    public void onGetRouteFabClicked() {
         if (uiStateMutableLiveData.getValue() instanceof MAP.SHOW_DROPPED_PIN.ONLY_SHOW_DROPPED_PIN) {
-            routingRepository.getCarRoute(LocationMapper.LocationToLatLng(locationRepository.getLocationObservable().blockingLast()), ((MAP.SHOW_DROPPED_PIN) uiStateMutableLiveData.getValue()).getPinLatLng());
-            uiStateMutableLiveData.setValue(new MAP.SHOW_DROPPED_PIN.SHOW_DROPPED_PIN_AND_ROUTE_LOADING_DIALOG(((MAP.SHOW_DROPPED_PIN.ONLY_SHOW_DROPPED_PIN) uiStateMutableLiveData.getValue()).getPinLatLng()));
+            Disposable disposable = locationRepository.getLocationObservable().firstElement()
+                    .subscribe(location -> {
+                routingRepository.getCarRoute(LocationMapper.LocationToLatLng(location), ((MAP.SHOW_DROPPED_PIN) uiStateMutableLiveData.getValue()).getPinLatLng());
+                uiStateMutableLiveData.setValue(new MAP.SHOW_DROPPED_PIN.SHOW_DROPPED_PIN_AND_ROUTE_LOADING_DIALOG(((MAP.SHOW_DROPPED_PIN.ONLY_SHOW_DROPPED_PIN) uiStateMutableLiveData.getValue()).getPinLatLng()));
+                    }, throwable -> throwable.printStackTrace());
         }
     }
 

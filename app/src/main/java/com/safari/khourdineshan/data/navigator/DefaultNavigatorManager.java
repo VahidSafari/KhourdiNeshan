@@ -40,28 +40,33 @@ public class DefaultNavigatorManager implements NavigatorManager {
         locationAndRouteDisposable = Observable.combineLatest(locationObservable, routeObservable, (location, route) -> new Pair<>(location, route))
                 .subscribeOn(Schedulers.computation())
                 .subscribe(locationAndRoute -> {
-                    if (locationAndRoute.first != null && locationAndRoute.second instanceof Result.Success) {
-                        Location location = locationAndRoute.first;
-                        Route route = ((Result.Success<Route>) locationAndRoute.second).getResult();
-                        List<DirectionStep> directionSteps = route.getLegs().get(0).getDirectionSteps();
+                    try {
+                        if (locationAndRoute.first != null && locationAndRoute.second instanceof Result.Success) {
+                            Location location = locationAndRoute.first;
+                            Route route = ((Result.Success<Route>) locationAndRoute.second).getResult();
+                            List<DirectionStep> directionSteps = route.getLegs().get(0).getDirectionSteps();
 
-                        LocationOnRouteSnapper.SnappedLocationModel snappedLocationModel = LocationOnRouteSnapper.snapLocationOnRoute(location, directionSteps);
-                        if (snappedLocationModel != null) { // snapping on route is successful so we update navigation data
-                            snappedLocationOnRouteBehaviourSubject.onNext(snappedLocationModel.getLocation());
+                            LocationOnRouteSnapper.SnappedLocationModel snappedLocationModel = LocationOnRouteSnapper.snapLocationOnRoute(location, directionSteps);
+                            if (snappedLocationModel != null) { // snapping on route is successful so we update navigation data
+                                snappedLocationOnRouteBehaviourSubject.onNext(snappedLocationModel.getLocation());
 
-                            DirectionStep currentStep = directionSteps.get(snappedLocationModel.getStepIndex());
-                            if (currentStep != null) {
-                                currentStepBehaviourSubject.onNext(currentStep);
-                            }
+                                DirectionStep currentStep = directionSteps.get(snappedLocationModel.getStepIndex());
+                                if (currentStep != null) {
+                                    currentStepBehaviourSubject.onNext(currentStep);
+                                }
 
-                            if (snappedLocationModel.getStepIndex() + 1 < directionSteps.size()) {
-                                DirectionStep nextStep = directionSteps.get(snappedLocationModel.getStepIndex() + 1);
-                                if (nextStep != null) {
-                                    currentStepBehaviourSubject.onNext(nextStep);
+                                if (snappedLocationModel.getStepIndex() + 1 < directionSteps.size()) {
+                                    DirectionStep nextStep = directionSteps.get(snappedLocationModel.getStepIndex() + 1);
+                                    if (nextStep != null) {
+                                        currentStepBehaviourSubject.onNext(nextStep);
+                                    }
                                 }
                             }
                         }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
+
                 });
     }
 
