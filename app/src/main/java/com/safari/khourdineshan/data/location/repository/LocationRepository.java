@@ -5,11 +5,12 @@ import android.location.Location;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresPermission;
-import androidx.lifecycle.LiveData;
+
+import io.reactivex.Observable;
 
 public interface LocationRepository {
     @NonNull
-    LiveData<Location> getLiveLocation();
+    Observable<Location> getLocationObservable();
 
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     void startReceivingLocation();

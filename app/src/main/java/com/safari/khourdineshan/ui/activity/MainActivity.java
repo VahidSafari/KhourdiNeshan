@@ -40,6 +40,9 @@ import org.neshan.servicessdk.direction.model.Route;
 
 import java.util.ArrayList;
 
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 2121;
@@ -51,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
     private Polyline onMapPolyline;
     @Nullable
     private IServiceConnection serviceConnection;
+    private Disposable locationObservationDisposable;
+    private CompositeDisposable navigatorCompositeObservationDisposable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void initMainActivityViewModel() {
         mainActivityViewModel = new ViewModelProvider(this, MainActivityProvider.getInstance().getMainActivityViewModelFactory()).get(MainActivityViewModel.class);
-        mainActivityViewModel.getLiveLocation().observe(this, this::onNewLocationReceived);
+        locationObservationDisposable = mainActivityViewModel.getLocationObservable().subscribe(this::onNewLocationReceived, Throwable::printStackTrace);
         mainActivityViewModel.getMapUIState().observe(this, this::onMapUiStateChanged);
     }
 
@@ -127,8 +132,9 @@ public class MainActivity extends AppCompatActivity {
                 showMapUnfollowState();
             } else if (uiState instanceof MAP.SHOW_DROPPED_PIN) {
                 showMapDroppedPinState((MAP.SHOW_DROPPED_PIN) uiState);
-            } else if (uiState instanceof MAP.WAITING_FOR_ROUTE_RESPONSE) {
-                showLoadingState();
+                if (uiState instanceof MAP.SHOW_DROPPED_PIN.SHOW_DROPPED_PIN_AND_ROUTE_LOADING_DIALOG) {
+                    showLoadingDialog();
+                }
             } else if (uiState instanceof MAP.SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN) {
                 showRoutingState((MAP.SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN) uiState);
             }
@@ -147,6 +153,10 @@ public class MainActivity extends AppCompatActivity {
         binding.currentLocationFab.show();
     }
 
+    private void showDroppedPin() {
+
+    }
+
     private void showNavigationState() {
         binding.getRouteFab.hide();
         binding.startNavigationFab.hide();
@@ -157,15 +167,22 @@ public class MainActivity extends AppCompatActivity {
             public void onServiceConnected(ComponentName name, IBinder serviceIBinder) {
                 NavigatorService.KhoordiNeshanServiceBinder binder = (NavigatorService.KhoordiNeshanServiceBinder) serviceIBinder;
                 MainActivity.this.serviceConnection = binder.getServiceActions();
-                MainActivity.this.serviceConnection.getNavigatorManager().currentStep().observe(MainActivity.this, directionStep -> {
+
+                Disposable currentStepDisposable = MainActivity.this.serviceConnection.getNavigatorManager().currentStepObservable().subscribe(directionStep -> {
                     binding.navigatorCurrentStepTextView.setText(directionStep.getName());
                     Toast.makeText(MainActivity.this, directionStep.getName(), Toast.LENGTH_LONG).show();
-                });
-                MainActivity.this.serviceConnection.getNavigatorManager().NextStep().observe(MainActivity.this, directionStep -> {
+                }, Throwable::printStackTrace);
+
+                Disposable nextStepDisposable = MainActivity.this.serviceConnection.getNavigatorManager().nextStepObservable().subscribe(directionStep -> {
                     binding.navigatorNextStepTextView.setText(directionStep.getName());
                     Toast.makeText(MainActivity.this, directionStep.getName(), Toast.LENGTH_LONG).show();
-                });
-                MainActivity.this.serviceConnection.getNavigatorManager().snappedLocationOnCurrentRoute().observe(MainActivity.this, location -> updateCurrentLocationMarkerLatLng(location.first));
+                }, Throwable::printStackTrace);
+
+                Disposable snappedLocationDisposable = MainActivity.this.serviceConnection.getNavigatorManager().snappedLocationOnCurrentRoute().subscribe(location -> {
+                    updateCurrentLocationMarkerLatLng(location);
+                }, Throwable::printStackTrace);
+
+                navigatorCompositeObservationDisposable.addAll(currentStepDisposable, nextStepDisposable, snappedLocationDisposable);
             }
 
             @Override
@@ -201,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
         hideLoadingState();
     }
 
-    private void showLoadingState() {
+    private void showLoadingDialog() {
         binding.getRouteFab.hide();
         binding.startNavigationFab.hide();
         binding.currentLocationFab.show();
@@ -290,6 +307,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (locationObservationDisposable != null && !locationObservationDisposable.isDisposed()) {
+            locationObservationDisposable.dispose();
+        }
         MainActivityProvider.deinit();
     }
 }

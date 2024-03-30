@@ -26,7 +26,6 @@ public class NavigatorService extends Service implements IServiceConnection {
     private static final String CHANNEL_ID = "KhoordiNeshanService54832";
     private static final String CHANNEL_NAME = "Khoordi";
     private final IBinder binder = new KhoordiNeshanServiceBinder();
-    private NavigatorProvider navigatorProvider;
 
     public class KhoordiNeshanServiceBinder extends Binder {
         public IServiceConnection getServiceActions() {
@@ -39,6 +38,7 @@ public class NavigatorService extends Service implements IServiceConnection {
         super.onCreate();
         startForeground(NOTIFICATION_ID, getNotification());
         NavigatorProvider.init(ApplicationProvider.getInstance());
+        NavigatorProvider.getInstance().getNavigatorManagerSingleton().startNavigating();
     }
 
     @Override

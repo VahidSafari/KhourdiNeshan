@@ -1,7 +1,6 @@
 package com.safari.khourdineshan.data.routing.repository;
 
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
+import androidx.annotation.NonNull;
 
 import com.safari.khourdineshan.core.model.base.Result;
 import com.safari.khourdineshan.core.mapper.LocationMapper;
@@ -9,10 +8,11 @@ import com.safari.khourdineshan.data.routing.datasource.RoutingService;
 
 import org.neshan.common.model.LatLng;
 import org.neshan.servicessdk.direction.model.NeshanDirectionResult;
-import org.neshan.servicessdk.direction.model.Route;
 
 import java.io.IOException;
 
+import io.reactivex.Observable;
+import io.reactivex.subjects.BehaviorSubject;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -21,7 +21,7 @@ public class DefaultRoutingRepository implements RoutingRepository {
 
     private static final String ROUTING_TYPE_PARAM_CAR = "car";
     private final RoutingService routingService;
-    private final MutableLiveData<Result<Route>> carRouteResult = new MutableLiveData<>();
+    private final BehaviorSubject<Result> carRouteResult = BehaviorSubject.create();
     private Call<NeshanDirectionResult> onTheFlightRoutingRequestCall;
 
     public DefaultRoutingRepository(RoutingService routingRemoteDataSource) {
@@ -29,7 +29,7 @@ public class DefaultRoutingRepository implements RoutingRepository {
     }
 
     @Override
-    public LiveData<Result<Route>> getRouteResponseLiveData() {
+    public Observable<Result> getRouteResponseObservable() {
         return carRouteResult;
     }
 
@@ -39,12 +39,12 @@ public class DefaultRoutingRepository implements RoutingRepository {
         onTheFlightRoutingRequestCall = routingService.getRoute(ROUTING_TYPE_PARAM_CAR, LocationMapper.LatLngToString(originLatLng), LocationMapper.LatLngToString(destinationLatLng));
         onTheFlightRoutingRequestCall.enqueue(new Callback<NeshanDirectionResult>() {
             @Override
-            public void onResponse(Call<NeshanDirectionResult> call, Response<NeshanDirectionResult> response) {
-                if (response.body() != null) {
-                    carRouteResult.setValue(new Result.Success<>(response.body().getRoutes().get(0)));
+            public void onResponse(@NonNull Call<NeshanDirectionResult> call, @NonNull Response<NeshanDirectionResult> response) {
+                if (response.body() != null && response.isSuccessful()) {
+                    carRouteResult.onNext(new Result.Success<>(response.body().getRoutes().get(0)));
                 } else {
                     try {
-                        carRouteResult.setValue(new Result.Fail(new Throwable(response.errorBody() != null ? response.errorBody().string() : "request failed. try again")));
+                        carRouteResult.onNext(new Result.Fail(new Throwable(response.errorBody() != null ? response.errorBody().string() : "request failed. try again")));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -52,8 +52,8 @@ public class DefaultRoutingRepository implements RoutingRepository {
             }
 
             @Override
-            public void onFailure(Call<NeshanDirectionResult> call, Throwable t) {
-                carRouteResult.setValue(new Result.Fail(t));
+            public void onFailure(@NonNull Call<NeshanDirectionResult> call, @NonNull Throwable t) {
+                carRouteResult.onNext(new Result.Fail(t));
 
             }
         });

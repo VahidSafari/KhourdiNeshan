@@ -7,17 +7,18 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresPermission;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 
+import io.reactivex.Observable;
+import io.reactivex.subjects.BehaviorSubject;
+
 public class LocationDataSourceImpl implements LocationDataSource {
 
-    private final MutableLiveData<Location> locationMutableLiveData = new MutableLiveData<>();
+    private final BehaviorSubject<Location> locationBehaviorSubject = BehaviorSubject.create();
     private final FusedLocationProviderClient fusedLocationClient;
     private final LocationManager locationManager;
     private final LocationRequest locationRequest;
@@ -30,8 +31,8 @@ public class LocationDataSourceImpl implements LocationDataSource {
 
     @NonNull
     @Override
-    public LiveData<Location> getLiveLocation() {
-        return locationMutableLiveData;
+    public Observable<Location> getLiveLocation() {
+        return locationBehaviorSubject;
     }
 
 
@@ -43,7 +44,7 @@ public class LocationDataSourceImpl implements LocationDataSource {
                     @Override
                     public void onLocationResult(@NonNull LocationResult locationResult) {
                         if (!locationResult.getLocations().isEmpty()) {
-                            locationMutableLiveData.setValue(locationResult.getLocations().get(0));
+                            locationBehaviorSubject.onNext(locationResult.getLocations().get(0));
                         }
                     }
                 },

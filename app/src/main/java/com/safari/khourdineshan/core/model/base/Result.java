@@ -1,7 +1,7 @@
 package com.safari.khourdineshan.core.model.base;
 
-public abstract class Result<T> {
-    public final static class Success<T> extends Result<T> {
+public abstract class Result {
+    public final static class Success<T> extends Result {
         private final T result;
 
         public Success(T result) {

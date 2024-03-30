@@ -11,7 +11,7 @@ public abstract class MAP extends UIState {
     public static final class DO_NOT_FOLLOW_USER_LOCATION extends MAP {
     }
 
-    public static final class SHOW_DROPPED_PIN extends MAP {
+    public static abstract class SHOW_DROPPED_PIN extends MAP {
         private final LatLng pinLatLng;
 
         public SHOW_DROPPED_PIN(LatLng pinLatLng) {
@@ -21,9 +21,17 @@ public abstract class MAP extends UIState {
         public LatLng getPinLatLng() {
             return pinLatLng;
         }
-    }
 
-    public static final class WAITING_FOR_ROUTE_RESPONSE extends MAP {
+        public static final class ONLY_SHOW_DROPPED_PIN extends SHOW_DROPPED_PIN {
+            public ONLY_SHOW_DROPPED_PIN(LatLng pinLatLng) {
+                super(pinLatLng);
+            }
+        }
+        public static final class SHOW_DROPPED_PIN_AND_ROUTE_LOADING_DIALOG extends SHOW_DROPPED_PIN {
+            public SHOW_DROPPED_PIN_AND_ROUTE_LOADING_DIALOG(LatLng pinLatLng) {
+                super(pinLatLng);
+            }
+        }
     }
 
     public static final class SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN extends MAP {

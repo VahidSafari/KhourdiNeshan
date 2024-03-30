@@ -7,9 +7,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresPermission;
 import androidx.lifecycle.LiveData;
 
+import io.reactivex.Observable;
+
 public interface LocationDataSource {
     @NonNull
-    LiveData<Location> getLiveLocation();
+    Observable<Location> getLiveLocation();
 
     @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
     void startReceivingLocation();
