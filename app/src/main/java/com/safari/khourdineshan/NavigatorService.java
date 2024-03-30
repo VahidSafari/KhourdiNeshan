@@ -17,7 +17,7 @@ import com.safari.khourdineshan.di.ApplicationProvider;
 import com.safari.khourdineshan.di.NavigatorProvider;
 import com.safari.khourdineshan.ui.activity.MainActivity;
 
-public class NavigatorIService extends Service implements IServiceConnection {
+public class NavigatorService extends Service implements IServiceConnection {
 
     public static final String SERVICE_CONTENT_TITLE = "نشان خوردی";
     public static final String SERVICE_CONTENT_TEXT = "در حال دریافت لوکیشن";
@@ -30,7 +30,7 @@ public class NavigatorIService extends Service implements IServiceConnection {
 
     public class KhoordiNeshanServiceBinder extends Binder {
         public IServiceConnection getServiceActions() {
-            return NavigatorIService.this;
+            return NavigatorService.this;
         }
     }
 

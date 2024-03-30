@@ -5,6 +5,7 @@ import android.util.Pair;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.safari.khourdineshan.core.model.base.Result;
 import com.safari.khourdineshan.data.location.repository.LocationRepository;
@@ -27,6 +28,10 @@ public class DefaultNavigatorManager implements NavigatorManager {
     private final MediatorLiveData<List<DirectionStep>> remainingStepsToDestinationMutableLiveData = new MediatorLiveData<>();
 
     private final MediatorLiveData<Pair<Location, DistanceOp>> snappedLocationOnRouteLiveData = new MediatorLiveData<>();
+
+    private final MutableLiveData<DirectionStep> currentStep = new MutableLiveData<>();
+    private final MutableLiveData<DirectionStep> nextStep = new MutableLiveData<>();
+
 
     public DefaultNavigatorManager(RoutingRepository routingRepository, LocationRepository locationRepository) {
         this.routingRepository = routingRepository;
@@ -54,6 +59,8 @@ public class DefaultNavigatorManager implements NavigatorManager {
         Pair<Location, DistanceOp> locationDistanceOpPair = LocationOnRouteSnapper.snapLocationOnRoute(location, remainingStepsToDestinationMutableLiveData.getValue());
         if (snappedLocationOnRouteLiveData.getValue().second.distance() > locationDistanceOpPair.second.distance()) {
             remainingStepsToDestinationMutableLiveData.setValue(remainingStepsToDestinationMutableLiveData.getValue().subList(1, remainingStepsToDestinationMutableLiveData.getValue().size()));
+            currentStep.setValue(remainingStepsToDestinationMutableLiveData.getValue().get(0));
+            nextStep.setValue(remainingStepsToDestinationMutableLiveData.getValue().get(1));
         }
     }
 
@@ -67,18 +74,18 @@ public class DefaultNavigatorManager implements NavigatorManager {
     }
 
     @Override
-    public LiveData<Location> snappedLocationOnCurrentRoute() {
-        return null;
+    public MediatorLiveData<Pair<Location, DistanceOp>> snappedLocationOnCurrentRoute() {
+        return snappedLocationOnRouteLiveData;
     }
 
     @Override
     public LiveData<DirectionStep> currentStep() {
-        return null;
+        return currentStep;
     }
 
     @Override
     public LiveData<DirectionStep> NextStep() {
-        return null;
+        return nextStep;
     }
 
     @Override

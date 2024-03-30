@@ -20,7 +20,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.safari.khourdineshan.IServiceConnection;
-import com.safari.khourdineshan.NavigatorIService;
+import com.safari.khourdineshan.NavigatorService;
 import com.safari.khourdineshan.R;
 import com.safari.khourdineshan.core.mapper.LocationMapper;
 import com.safari.khourdineshan.databinding.ActivityMainBinding;
@@ -155,11 +155,17 @@ public class MainActivity extends AppCompatActivity {
         ServiceConnection serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder serviceIBinder) {
-                NavigatorIService.KhoordiNeshanServiceBinder binder = (NavigatorIService.KhoordiNeshanServiceBinder) serviceIBinder;
+                NavigatorService.KhoordiNeshanServiceBinder binder = (NavigatorService.KhoordiNeshanServiceBinder) serviceIBinder;
                 MainActivity.this.serviceConnection = binder.getServiceActions();
-                MainActivity.this.serviceConnection.getNavigatorManager().currentStep().observe(MainActivity.this, directionStep -> binding.navigatorCurrentStepTextView.setText(directionStep.getName()));
-                MainActivity.this.serviceConnection.getNavigatorManager().NextStep().observe(MainActivity.this, directionStep -> binding.navigatorNextStepTextView.setText(directionStep.getName()));
-                MainActivity.this.serviceConnection.getNavigatorManager().snappedLocationOnCurrentRoute().observe(MainActivity.this, location -> updateCurrentLocationMarkerLatLng(location));
+                MainActivity.this.serviceConnection.getNavigatorManager().currentStep().observe(MainActivity.this, directionStep -> {
+                    binding.navigatorCurrentStepTextView.setText(directionStep.getName());
+                    Toast.makeText(MainActivity.this, directionStep.getName(), Toast.LENGTH_LONG).show();
+                });
+                MainActivity.this.serviceConnection.getNavigatorManager().NextStep().observe(MainActivity.this, directionStep -> {
+                    binding.navigatorNextStepTextView.setText(directionStep.getName());
+                    Toast.makeText(MainActivity.this, directionStep.getName(), Toast.LENGTH_LONG).show();
+                });
+                MainActivity.this.serviceConnection.getNavigatorManager().snappedLocationOnCurrentRoute().observe(MainActivity.this, location -> updateCurrentLocationMarkerLatLng(location.first));
             }
 
             @Override
@@ -168,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
-        bindService(new Intent(this, NavigatorIService.class), serviceConnection, Context.BIND_AUTO_CREATE);
+        bindService(new Intent(this, NavigatorService.class), serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
     private void showRoutingState(MAP.SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN state) {
