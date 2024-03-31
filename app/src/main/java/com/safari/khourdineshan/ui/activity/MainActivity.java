@@ -149,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showMapDroppedPinState(MAP.SHOW_DROPPED_PIN droppedPinState) {
+        binding.map.setTilt(90,0);
         Marker droppedPinMarker = MainActivityProvider.getInstance().getDroppedPinMarker(this);
         binding.map.removeMarker(droppedPinMarker);
         droppedPinMarker.setLatLng(droppedPinState.getPinLatLng());
@@ -162,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
         binding.getRouteFab.hide();
         binding.startNavigationFab.hide();
         binding.currentLocationFab.hide();
-        hideLoadingState();
+        hideLoadingDialog();
         ServiceConnection serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder serviceIBinder) {
@@ -174,6 +175,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 navigatorCompositeObservationDisposable = new CompositeDisposable();
                 if (MainActivity.this.serviceConnection != null) {
+                    binding.map.setTilt(65,0);
                     Disposable currentStepDisposable = MainActivity.this.serviceConnection.getNavigatorManager().currentStepObservable()
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(directionStep -> {
@@ -190,7 +192,14 @@ public class MainActivity extends AppCompatActivity {
 
                     Disposable snappedLocationDisposable = MainActivity.this.serviceConnection.getNavigatorManager().snappedLocationOnCurrentRoute()
                             .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe(location -> updateCurrentLocationMarkerLatLng(location), Throwable::printStackTrace);
+                            .subscribe(snappedLocation -> {
+                                updateCurrentLocationMarkerLatLng(snappedLocation);
+                                MapUtils.focusOnLocation(binding.map, snappedLocation);
+                            }, Throwable::printStackTrace);
+
+                    Disposable bearingDisposable = MainActivity.this.serviceConnection.getNavigatorManager().bearingBetweenLastAndCurrentSnappedLocationsObservable()
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(bearing -> binding.map.setBearing(bearing.floatValue(), 1f), Throwable::printStackTrace);
 
                     navigatorCompositeObservationDisposable.addAll(currentStepDisposable, nextStepDisposable, snappedLocationDisposable);
                 }
@@ -209,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
         binding.getRouteFab.hide();
         binding.startNavigationFab.show();
         binding.currentLocationFab.show();
-        hideLoadingState();
+        hideLoadingDialog();
         showRouteOnMap(state.getRoute());
     }
 
@@ -218,22 +227,23 @@ public class MainActivity extends AppCompatActivity {
         binding.startNavigationFab.hide();
         binding.currentLocationFab.show();
         hideRoute();
-        hideLoadingState();
+        hideLoadingDialog();
     }
 
     private void showMapFollowState() {
+        binding.map.setTilt(90,0);
         binding.getRouteFab.hide();
         binding.startNavigationFab.hide();
         binding.currentLocationFab.show();
         hideRoute();
-        hideLoadingState();
+        hideLoadingDialog();
     }
 
     private void showLoadingDialog() {
         binding.getRouteFab.hide();
         binding.startNavigationFab.hide();
         binding.currentLocationFab.show();
-        hideLoadingState();
+        hideLoadingDialog();
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("getting route, please wait...")
                 .setCancelable(false)
@@ -245,9 +255,10 @@ public class MainActivity extends AppCompatActivity {
         loadingDialog.show();
     }
 
-    private void hideLoadingState() {
+    private void hideLoadingDialog() {
         if (loadingDialog != null) {
             loadingDialog.hide();
+            loadingDialog = null;
         }
     }
 
@@ -300,7 +311,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showCloseAppConfirmation() {
-        hideLoadingState();
+        hideLoadingDialog();
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(getString(R.string.close_app))
                 .setCancelable(false)

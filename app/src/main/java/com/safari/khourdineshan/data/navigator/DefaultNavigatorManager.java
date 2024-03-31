@@ -1,13 +1,18 @@
 package com.safari.khourdineshan.data.navigator;
 
 import android.location.Location;
+import android.util.Log;
 import android.util.Pair;
 
+import androidx.annotation.NonNull;
+
+import com.safari.khourdineshan.core.mapper.LocationMapper;
 import com.safari.khourdineshan.core.model.base.Result;
 import com.safari.khourdineshan.data.location.repository.LocationRepository;
 import com.safari.khourdineshan.data.routing.repository.RoutingRepository;
 import com.safari.khourdineshan.utils.LocationOnRouteSnapper;
 
+import org.neshan.common.model.LatLng;
 import org.neshan.servicessdk.direction.model.DirectionStep;
 import org.neshan.servicessdk.direction.model.Route;
 
@@ -25,6 +30,7 @@ public class DefaultNavigatorManager implements NavigatorManager {
     private final BehaviorSubject<Location> snappedLocationOnRouteBehaviourSubject = BehaviorSubject.create();
     private final BehaviorSubject<DirectionStep> currentStepBehaviourSubject = BehaviorSubject.create();
     private final BehaviorSubject<DirectionStep> nextStepBehaviourSubject = BehaviorSubject.create();
+    private final BehaviorSubject<Double> bearingBetweenLastAndCurrentSnappedLocations = BehaviorSubject.create();
     private Disposable locationAndRouteDisposable;
 
     public DefaultNavigatorManager(RoutingRepository routingRepository, LocationRepository locationRepository) {
@@ -48,19 +54,10 @@ public class DefaultNavigatorManager implements NavigatorManager {
 
                             LocationOnRouteSnapper.SnappedLocationModel snappedLocationModel = LocationOnRouteSnapper.snapLocationOnRoute(location, directionSteps);
                             if (snappedLocationModel != null) { // snapping on route is successful so we update navigation data
-                                snappedLocationOnRouteBehaviourSubject.onNext(snappedLocationModel.getLocation());
-
-                                DirectionStep currentStep = directionSteps.get(snappedLocationModel.getStepIndex());
-                                if (currentStep != null) {
-                                    currentStepBehaviourSubject.onNext(currentStep);
-                                }
-
-                                if (snappedLocationModel.getStepIndex() + 1 < directionSteps.size()) {
-                                    DirectionStep nextStep = directionSteps.get(snappedLocationModel.getStepIndex() + 1);
-                                    if (nextStep != null) {
-                                        currentStepBehaviourSubject.onNext(nextStep);
-                                    }
-                                }
+                                updateBearingBetweenLastAndCurrentLocationObservable(snappedLocationModel, directionSteps);
+                                updateCurrentStepObservable(snappedLocationModel, directionSteps);
+                                updateNextStepObservable(snappedLocationModel, directionSteps);
+                                updateSnappedLocationObservable(snappedLocationModel);
                             }
                         }
                     } catch (Exception e) {
@@ -68,6 +65,48 @@ public class DefaultNavigatorManager implements NavigatorManager {
                     }
 
                 });
+    }
+
+    private void updateSnappedLocationObservable(LocationOnRouteSnapper.SnappedLocationModel snappedLocationModel) {
+        snappedLocationOnRouteBehaviourSubject.onNext(snappedLocationModel.getLocation());
+    }
+
+    private void updateNextStepObservable(LocationOnRouteSnapper.SnappedLocationModel snappedLocationModel, List<DirectionStep> directionSteps) {
+        if (snappedLocationModel.getStepIndex() + 1 < directionSteps.size()) {
+            DirectionStep nextStep = directionSteps.get(snappedLocationModel.getStepIndex() + 1);
+            if (nextStep != null) {
+                currentStepBehaviourSubject.onNext(nextStep);
+            }
+        }
+    }
+
+    private void updateCurrentStepObservable(@NonNull LocationOnRouteSnapper.SnappedLocationModel snappedLocationModel, @NonNull List<DirectionStep> directionSteps) {
+        DirectionStep currentStep = directionSteps.get(snappedLocationModel.getStepIndex());
+        if (currentStep != null) {
+            currentStepBehaviourSubject.onNext(currentStep);
+        }
+    }
+
+    private void updateBearingBetweenLastAndCurrentLocationObservable(@NonNull LocationOnRouteSnapper.SnappedLocationModel snappedLocationModel, @NonNull List<DirectionStep> directionSteps) {
+        Location lastSnappedLocation = snappedLocationOnRouteBehaviourSubject.getValue();
+        if (lastSnappedLocation != null) {
+            bearingBetweenLastAndCurrentSnappedLocations.onNext(calculateBearingBetweenTwoLocations(lastSnappedLocation, snappedLocationModel.getLocation()));
+            Log.d("bearing", "");
+        } else {
+            bearingBetweenLastAndCurrentSnappedLocations.onNext(calculateBearingBetweenTwoLocations(directionSteps.get(snappedLocationModel.getStepIndex()).getStartLocation(), LocationMapper.LocationToLatLng(snappedLocationModel.getLocation())));
+        }
+    }
+
+    public static double calculateBearingBetweenTwoLocations(Location startLocation, Location endLocation) {
+        double x = Math.cos(endLocation.getLongitude()) * Math.sin(endLocation.getLongitude() - startLocation.getLongitude());
+        double y = Math.cos(startLocation.getLatitude()) * Math.sin(endLocation.getLatitude()) - Math.sin(startLocation.getLatitude()) * Math.cos(endLocation.getLatitude()) * Math.cos(endLocation.getLongitude() - startLocation.getLongitude());
+        return Math.toDegrees(Math.atan2(x, y));
+    }
+
+    public static double calculateBearingBetweenTwoLocations(LatLng startLocation, LatLng endLocation) {
+        double x = Math.cos(endLocation.getLongitude()) * Math.sin(endLocation.getLongitude() - startLocation.getLongitude());
+        double y = Math.cos(startLocation.getLatitude()) * Math.sin(endLocation.getLatitude()) - Math.sin(startLocation.getLatitude()) * Math.cos(endLocation.getLatitude()) * Math.cos(endLocation.getLongitude() - startLocation.getLongitude());
+        return Math.toDegrees(Math.atan2(x, y));
     }
 
     @Override
@@ -83,6 +122,11 @@ public class DefaultNavigatorManager implements NavigatorManager {
     @Override
     public Observable<DirectionStep> nextStepObservable() {
         return nextStepBehaviourSubject;
+    }
+
+    @Override
+    public Observable<Double> bearingBetweenLastAndCurrentSnappedLocationsObservable() {
+        return bearingBetweenLastAndCurrentSnappedLocations;
     }
 
     @Override

@@ -11,5 +11,6 @@ public interface NavigatorManager {
     Observable<Location> snappedLocationOnCurrentRoute();
     Observable<DirectionStep> currentStepObservable();
     Observable<DirectionStep> nextStepObservable();
+    Observable<Double> bearingBetweenLastAndCurrentSnappedLocationsObservable();
     void stop();
 }
