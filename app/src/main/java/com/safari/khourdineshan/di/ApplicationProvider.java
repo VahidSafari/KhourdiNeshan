@@ -15,7 +15,6 @@ import com.safari.khourdineshan.core.BaseUrls;
 import com.safari.khourdineshan.data.location.datasource.LocationDataSourceImpl;
 import com.safari.khourdineshan.data.location.repository.DefaultLocationRepository;
 import com.safari.khourdineshan.data.location.repository.LocationRepository;
-import com.safari.khourdineshan.data.navigator.NavigatorManager;
 import com.safari.khourdineshan.data.routing.datasource.RoutingService;
 import com.safari.khourdineshan.data.routing.repository.DefaultRoutingRepository;
 import com.safari.khourdineshan.data.routing.repository.RoutingRepository;

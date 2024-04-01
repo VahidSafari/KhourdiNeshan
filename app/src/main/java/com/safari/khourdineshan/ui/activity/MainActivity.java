@@ -67,11 +67,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
         checkLocationPermissionAndStartReceivingLocation();
         initClickListeners();
-
-        binding.navigatorCurrentStepTextView.setText("current");
-        binding.navigatorNextStepTextView.setText("next");
-
-
     }
 
     private void initClickListeners() {
@@ -186,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
                     Disposable nextStepDisposable = MainActivity.this.serviceConnection.getNavigatorManager().nextStepObservable()
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(directionStep -> {
-                                binding.navigatorNextStepTextView.setText(directionStep.getName());
+                                binding.navigatorNextStepTextView.setText(directionStep.getInstruction());
                                 Toast.makeText(MainActivity.this, directionStep.getName(), Toast.LENGTH_LONG).show();
                             }, Throwable::printStackTrace);
 

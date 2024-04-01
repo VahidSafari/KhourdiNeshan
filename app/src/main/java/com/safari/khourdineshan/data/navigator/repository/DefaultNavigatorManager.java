@@ -1,4 +1,4 @@
-package com.safari.khourdineshan.data.navigator;
+package com.safari.khourdineshan.data.navigator.repository;
 
 import android.location.Location;
 import android.util.Log;
@@ -31,6 +31,7 @@ public class DefaultNavigatorManager implements NavigatorManager {
     private final BehaviorSubject<DirectionStep> currentStepBehaviourSubject = BehaviorSubject.create();
     private final BehaviorSubject<DirectionStep> nextStepBehaviourSubject = BehaviorSubject.create();
     private final BehaviorSubject<Double> bearingBetweenLastAndCurrentSnappedLocations = BehaviorSubject.create();
+    private final BehaviorSubject<Boolean> isArrivedToDestination = BehaviorSubject.create();
     private Disposable locationAndRouteDisposable;
 
     public DefaultNavigatorManager(RoutingRepository routingRepository, LocationRepository locationRepository) {
@@ -58,6 +59,7 @@ public class DefaultNavigatorManager implements NavigatorManager {
                                 updateCurrentStepObservable(snappedLocationModel, directionSteps);
                                 updateNextStepObservable(snappedLocationModel, directionSteps);
                                 updateSnappedLocationObservable(snappedLocationModel);
+                                updateIsArrivedToDestination(snappedLocationModel, directionSteps);
                             }
                         }
                     } catch (Exception e) {
@@ -67,7 +69,14 @@ public class DefaultNavigatorManager implements NavigatorManager {
                 });
     }
 
+    private void updateIsArrivedToDestination(LocationOnRouteSnapper.SnappedLocationModel snappedLocationModel, List<DirectionStep> directionSteps) {
+        if (snappedLocationModel.getStepIndex() >= directionSteps.size() - 2) {
+
+        }
+    }
+
     private void updateSnappedLocationObservable(LocationOnRouteSnapper.SnappedLocationModel snappedLocationModel) {
+        Log.d("snapStepIndex", "" + snappedLocationModel.getStepIndex());
         snappedLocationOnRouteBehaviourSubject.onNext(snappedLocationModel.getLocation());
     }
 
@@ -91,7 +100,6 @@ public class DefaultNavigatorManager implements NavigatorManager {
         Location lastSnappedLocation = snappedLocationOnRouteBehaviourSubject.getValue();
         if (lastSnappedLocation != null) {
             bearingBetweenLastAndCurrentSnappedLocations.onNext(calculateBearingBetweenTwoLocations(lastSnappedLocation, snappedLocationModel.getLocation()));
-            Log.d("bearing", "");
         } else {
             bearingBetweenLastAndCurrentSnappedLocations.onNext(calculateBearingBetweenTwoLocations(directionSteps.get(snappedLocationModel.getStepIndex()).getStartLocation(), LocationMapper.LocationToLatLng(snappedLocationModel.getLocation())));
         }

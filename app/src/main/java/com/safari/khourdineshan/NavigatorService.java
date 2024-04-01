@@ -13,7 +13,7 @@ import android.os.IBinder;
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 
-import com.safari.khourdineshan.data.navigator.NavigatorManager;
+import com.safari.khourdineshan.data.navigator.repository.NavigatorManager;
 import com.safari.khourdineshan.di.ApplicationProvider;
 import com.safari.khourdineshan.di.NavigatorProvider;
 import com.safari.khourdineshan.ui.activity.MainActivity;

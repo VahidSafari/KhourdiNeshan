@@ -1,7 +1,7 @@
 package com.safari.khourdineshan.di;
 
-import com.safari.khourdineshan.data.navigator.DefaultNavigatorManager;
-import com.safari.khourdineshan.data.navigator.NavigatorManager;
+import com.safari.khourdineshan.data.navigator.repository.DefaultNavigatorManager;
+import com.safari.khourdineshan.data.navigator.repository.NavigatorManager;
 
 public class NavigatorProvider {
 
