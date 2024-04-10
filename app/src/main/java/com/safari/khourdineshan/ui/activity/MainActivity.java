@@ -74,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
         binding.getRouteFab.setOnClickListener(v -> mainActivityViewModel.onGetRouteFabClicked());
         binding.currentLocationFab.setOnClickListener(v -> notifyViewModelOrPromptUserToEnableGPS());
         binding.startNavigationFab.setOnClickListener(v -> mainActivityViewModel.onStartNavigationButtonClicked());
+        binding.endNavigationFab.setOnClickListener(v -> mainActivityViewModel.onEndNavigationButtonClicked());
     }
 
     private void notifyViewModelOrPromptUserToEnableGPS() {
@@ -152,12 +153,14 @@ public class MainActivity extends AppCompatActivity {
         binding.getRouteFab.show();
         binding.startNavigationFab.hide();
         binding.currentLocationFab.show();
+        binding.endNavigationFab.hide();
     }
 
     private void showNavigationState() {
         binding.getRouteFab.hide();
         binding.startNavigationFab.hide();
         binding.currentLocationFab.hide();
+        binding.endNavigationFab.show();
         hideLoadingDialog();
         ServiceConnection serviceConnection = new ServiceConnection() {
             @Override
@@ -212,31 +215,38 @@ public class MainActivity extends AppCompatActivity {
     private void showRoutingState(MAP.SHOW_ROUTE_BETWEEN_USER_LOCATION_AND_DROPPED_PIN state) {
         binding.getRouteFab.hide();
         binding.startNavigationFab.show();
+        binding.endNavigationFab.hide();
         binding.currentLocationFab.show();
         hideLoadingDialog();
         showRouteOnMap(state.getRoute());
+        stopNavigation();
     }
 
     private void showMapUnfollowState() {
         binding.getRouteFab.hide();
         binding.startNavigationFab.hide();
+        binding.endNavigationFab.hide();
         binding.currentLocationFab.show();
         hideRoute();
         hideLoadingDialog();
+        stopNavigation();
     }
 
     private void showMapFollowState() {
         binding.map.setTilt(90,0);
         binding.getRouteFab.hide();
         binding.startNavigationFab.hide();
+        binding.endNavigationFab.hide();
         binding.currentLocationFab.show();
         hideRoute();
         hideLoadingDialog();
+        stopNavigation();
     }
 
     private void showLoadingDialog() {
         binding.getRouteFab.hide();
         binding.startNavigationFab.hide();
+        binding.endNavigationFab.hide();
         binding.currentLocationFab.show();
         hideLoadingDialog();
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -248,6 +258,7 @@ public class MainActivity extends AppCompatActivity {
                 });
         loadingDialog = builder.create();
         loadingDialog.show();
+        stopNavigation();
     }
 
     private void hideLoadingDialog() {
@@ -275,6 +286,11 @@ public class MainActivity extends AppCompatActivity {
         MapUtils.focusOnRoute(binding.map, PolylineEncoding.decode(route.getOverviewPolyline().getEncodedPolyline()));
     }
 
+    private void stopNavigation() {
+        if (serviceConnection != null) {
+            serviceConnection.stop();
+        }
+    }
 
     private void hideRoute() {
         if (onMapPolyline != null) {

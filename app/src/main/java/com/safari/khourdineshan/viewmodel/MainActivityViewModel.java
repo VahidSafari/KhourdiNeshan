@@ -139,5 +139,9 @@ public class MainActivityViewModel extends ViewModel {
             uiStateMutableLiveData.setValue(new MAP.DO_NOT_FOLLOW_USER_LOCATION());
         }
     }
+
+    public void onEndNavigationButtonClicked() {
+        uiStateMutableLiveData.setValue(new MAP.FOLLOW_USER_LOCATION());
+    }
 }
 
